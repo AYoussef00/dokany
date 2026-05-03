@@ -164,14 +164,14 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Head title="دكاني — متجرك على إنستغرام وواتساب">
+    <Head title="اطلق متجرك مع دكاني">
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
         <link
             href="https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Arimo:ital,wght@0,400..700;1,400..700&family=Changa:wght@200..800&display=swap"
             rel="stylesheet"
         />
-        <meta name="description" content="منصة تجارة اجتماعية للبائعين على إنستغرام وواتساب — متجر، طلبات، وإنستاباي في مكان واحد." />
+        <meta name="description" content="اطلق متجرك مع دكاني — متجر، طلبات، وإنستاباي في مكان واحد. للبائعين على إنستغرام وواتساب." />
     </Head>
 
     <div
@@ -205,7 +205,14 @@ onBeforeUnmount(() => {
                             >
                                 تسجيل الدخول
                             </Link>
-                            <span class="text-[16px] font-extrabold tracking-[-0.02em] text-white">دكاني</span>
+                            <Link
+                                href="/"
+                                dir="ltr"
+                                class="shrink-0 text-[22px] font-black tracking-wide text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] transition hover:text-[#f5ead8] sm:text-2xl"
+                                aria-label="Dokany"
+                            >
+                                Dokany
+                            </Link>
                         </div>
                     </header>
 
