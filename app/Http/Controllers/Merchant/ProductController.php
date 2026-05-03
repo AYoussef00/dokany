@@ -39,7 +39,7 @@ class ProductController extends Controller
             'description' => ['required', 'string', 'max:10000'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
             'images' => ['required', 'array', 'min:1', 'max:10'],
-            'images.*' => ['image', 'max:4096'],
+            'images.*' => ['image', 'max:10240'],
         ]);
 
         DB::transaction(function () use ($request, $validated): void {
@@ -73,7 +73,7 @@ class ProductController extends Controller
             'remove_image_ids' => ['sometimes', 'array'],
             'remove_image_ids.*' => ['integer'],
             'images' => ['sometimes', 'array'],
-            'images.*' => ['image', 'max:4096'],
+            'images.*' => ['image', 'max:10240'],
         ]);
 
         $removeIds = array_values(array_unique(array_map('intval', $validated['remove_image_ids'] ?? [])));

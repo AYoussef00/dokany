@@ -8,8 +8,10 @@ const props = withDefaults(
         logoUrl: string | null;
         /** مثل: إتمام الطلب أو الدفع — يُضاف قبل اسم المتجر */
         titleSuffix?: string | null;
+        /** روابط كاملة لصور LCP (شعار، أول بانر، …) — rel=preload */
+        preloadImageUrls?: string[];
     }>(),
-    { titleSuffix: null },
+    { titleSuffix: null, preloadImageUrls: () => [] },
 );
 
 const page = usePage<{ name: string }>();
@@ -42,6 +44,20 @@ const faviconHref = computed(() => {
 
     return '/favicon.ico';
 });
+
+const uniquePreloadImages = computed(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of props.preloadImageUrls ?? []) {
+        const u = raw?.trim();
+        if (u !== '' && u !== undefined && !seen.has(u)) {
+            seen.add(u);
+            out.push(u);
+        }
+    }
+
+    return out;
+});
 </script>
 
 <template>
@@ -49,5 +65,13 @@ const faviconHref = computed(() => {
         <meta head-key="storefront-description" name="description" :content="metaDescription" />
         <link head-key="storefront-icon" rel="icon" :href="faviconHref" sizes="any" />
         <link head-key="storefront-apple-touch" rel="apple-touch-icon" :href="faviconHref" />
+        <link
+            v-for="(href, i) in uniquePreloadImages"
+            :key="`preload-img-${i}-${href}`"
+            :head-key="`storefront-preload-img-${i}`"
+            rel="preload"
+            as="image"
+            :href="href"
+        />
     </Head>
 </template>

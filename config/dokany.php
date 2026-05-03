@@ -6,6 +6,12 @@ return [
     'storefront_path_prefix' => env('DOKANY_STORE_PATH_PREFIX', 'shop'),
 
     /**
+     * Seconds to cache the public storefront Inertia payload (catalog JSON).
+     * Keys include a revision hash so updates invalidate without waiting for TTL.
+     */
+    'storefront_catalog_cache_ttl' => max(0, (int) env('DOKANY_STOREFRONT_CACHE_TTL', 600)),
+
+    /**
      * Default hero copy on the public storefront (merchants can override in store settings).
      *
      * @var array{primary: string, secondary: string}

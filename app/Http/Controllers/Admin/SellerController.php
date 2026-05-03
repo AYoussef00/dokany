@@ -60,7 +60,7 @@ class SellerController extends Controller
             'whatsapp_phone' => ['required', 'string', 'max:32'],
             'phone' => ['required', 'string', 'max:32'],
             'address' => ['required', 'string', 'max:2000'],
-            'store_logo' => ['nullable', 'image', 'max:2048'],
+            'store_logo' => ['nullable', 'image', 'max:10240'],
         ]);
 
         $logoPath = null;

@@ -72,7 +72,7 @@ class StoreSettingsController extends Controller
             'phone' => ['required', 'string', 'max:32'],
             'whatsapp_phone' => ['required', 'string', 'max:32'],
             'instapay_wallet' => ['required', 'string', 'max:64'],
-            'store_logo' => ['nullable', 'image', 'max:4096'],
+            'store_logo' => ['nullable', 'image', 'max:10240'],
             'storefront_hero_primary' => ['nullable', 'string', 'max:5000'],
             'storefront_hero_secondary' => ['nullable', 'string', 'max:5000'],
             'social_facebook_url' => ['nullable', 'string', 'max:512'],
@@ -83,7 +83,7 @@ class StoreSettingsController extends Controller
             'hero_banner_remove_paths' => ['nullable', 'array', 'max:24'],
             'hero_banner_remove_paths.*' => ['string', 'max:512'],
             'hero_banner_images' => ['nullable', 'array', 'max:8'],
-            'hero_banner_images.*' => ['file', 'image', 'max:4096'],
+            'hero_banner_images.*' => ['file', 'image', 'max:10240'],
         ]);
 
         foreach (['storefront_hero_primary', 'storefront_hero_secondary'] as $field) {

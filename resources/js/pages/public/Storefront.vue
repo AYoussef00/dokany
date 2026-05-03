@@ -174,6 +174,20 @@ watch(heroBannerUrls, (urls) => {
 
 const hasSocialLinks = computed(() => socialEntries.value.length > 0);
 
+const storefrontHeadPreloadImages = computed(() => {
+    const urls: string[] = [];
+    const logo = props.seller.logo_url?.trim();
+    if (logo) {
+        urls.push(logo);
+    }
+    const firstBanner = heroBannerUrls.value[0]?.trim();
+    if (firstBanner) {
+        urls.push(firstBanner);
+    }
+
+    return urls;
+});
+
 defineOptions({ layout: false });
 
 const cartOpen = ref(false);
@@ -310,7 +324,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <StorefrontDocumentHead :store-name="seller.name" :logo-url="seller.logo_url" />
+    <StorefrontDocumentHead
+        :store-name="seller.name"
+        :logo-url="seller.logo_url"
+        :preload-image-urls="storefrontHeadPreloadImages"
+    />
 
     <div class="storefront-root min-h-svh antialiased" dir="rtl" lang="ar">
         <!-- خلفية هادئة خارج لوحة التحكم -->
@@ -347,6 +365,8 @@ onUnmounted(() => {
                         :src="seller.logo_url"
                         alt=""
                         class="size-full object-cover"
+                        fetchpriority="high"
+                        decoding="async"
                     />
                     <span v-else class="text-lg font-semibold text-[#8a6d4a] sm:text-xl">
                         {{ seller.name.trim().charAt(0) || '·' }}
@@ -493,7 +513,7 @@ onUnmounted(() => {
                     v-else
                     class="grid list-none grid-cols-2 gap-2.5 sm:gap-4"
                 >
-                    <li v-for="p in products" :key="p.id" class="group min-w-0">
+                    <li v-for="(p, idx) in products" :key="p.id" class="group min-w-0">
                         <article
                             class="flex h-full min-w-0 flex-col overflow-hidden rounded-xl bg-white shadow-[0_1px_0_rgb(17_17_17_/_0.05),0_4px_14px_rgb(17_17_17_/_0.05)] ring-1 ring-[#111111]/[0.04] transition duration-300 hover:shadow-[0_1px_0_rgb(17_17_17_/_0.07),0_10px_28px_rgb(17_17_17_/_0.08)] hover:ring-[#111111]/[0.06]"
                         >
@@ -505,7 +525,9 @@ onUnmounted(() => {
                                     :src="p.images[0].url"
                                     :alt="p.name"
                                     class="size-full object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
-                                    loading="lazy"
+                                    :loading="idx < 4 ? 'eager' : 'lazy'"
+                                    :fetchpriority="idx === 0 ? 'high' : idx < 4 ? 'low' : undefined"
+                                    decoding="async"
                                 />
                                 <div
                                     v-else

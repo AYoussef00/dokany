@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -28,14 +29,31 @@ class StorefrontController extends Controller
 
         $this->recordStorefrontVisitOncePerSession($request, $seller);
 
+        $ttl = (int) config('dokany.storefront_catalog_cache_ttl', 0);
+        if ($ttl > 0) {
+            $cacheKey = $this->storefrontCatalogCacheKey($seller);
+
+            return Inertia::render('public/Storefront', Cache::remember($cacheKey, $ttl, function () use ($seller) {
+                return $this->storefrontPagePayload($seller);
+            }));
+        }
+
+        return Inertia::render('public/Storefront', $this->storefrontPagePayload($seller));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function storefrontPagePayload(User $seller): array
+    {
+        $prefix = trim((string) config('dokany.storefront_path_prefix', 'shop'), '/');
+
         $products = $seller->products()
             ->with('images')
             ->latest()
             ->get();
 
-        $prefix = trim((string) config('dokany.storefront_path_prefix', 'shop'), '/');
-
-        return Inertia::render('public/Storefront', [
+        return [
             'seller' => [
                 'store_slug' => $seller->store_slug,
                 'name' => $seller->name,
@@ -61,7 +79,33 @@ class StorefrontController extends Controller
             'productCurrencyEn' => config('dokany.subscription.currency_label_en'),
             'productCurrencyAr' => config('dokany.subscription.currency_label'),
             'checkoutPath' => '/'.$prefix.'/'.$seller->store_slug.'/checkout',
-        ]);
+        ];
+    }
+
+    private function storefrontCatalogCacheKey(User $seller): string
+    {
+        $productMax = Product::query()->where('user_id', $seller->id)->max('updated_at');
+        $imageMax = ProductImage::query()
+            ->whereIn('product_id', Product::query()->where('user_id', $seller->id)->select('id'))
+            ->max('updated_at');
+
+        $bannerPaths = $seller->storefront_hero_banner_paths ?? [];
+        $bannerSig = is_array($bannerPaths) ? (json_encode($bannerPaths) ?: '') : '';
+
+        $parts = [
+            'v1',
+            (string) $seller->id,
+            (string) $seller->merchant_subscription_status,
+            (string) ($seller->updated_at?->timestamp ?? 0),
+            (string) $seller->store_logo_path,
+            $bannerSig,
+            (string) ($seller->storefront_hero_primary ?? ''),
+            (string) ($seller->storefront_hero_secondary ?? ''),
+            (string) ($productMax ?? ''),
+            (string) ($imageMax ?? ''),
+        ];
+
+        return 'storefront.catalog.'.hash('xxh128', implode("\0", $parts));
     }
 
     private function recordStorefrontVisitOncePerSession(Request $request, User $seller): void
