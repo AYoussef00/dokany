@@ -57,7 +57,11 @@ class DashboardTest extends TestCase
                 ->where('sellerDashboardStats.confirmed_orders_count', 1)
                 ->where('sellerDashboardStats.new_orders_count', 2)
                 ->where('sellerDashboardStats.invoices_count', 1)
-                ->where('sellerDashboardStats.storefront_visits_count', 0));
+                ->where('sellerDashboardStats.storefront_visits_count', 0)
+                ->where('sellerDashboardStats.orders_total_count', 3)
+                ->where('sellerDashboardStats.orders_today_count', 3)
+                ->has('sellerDashboardStats.order_status_breakdown', 4)
+                ->has('sellerDashboardStats.orders_monthly_trend', 6));
     }
 
     private function makeStorefrontOrder(User $seller, string $status): StorefrontOrder

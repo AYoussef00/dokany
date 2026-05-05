@@ -1,18 +1,24 @@
 <script setup lang="ts">
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
+    Activity,
+    Bell,
+    Calendar,
     ClipboardList,
-    Clock,
-    Eye,
+    FileText,
+    Menu,
     Package,
+    Search,
     ShoppingCart,
     Store,
+    TrendingUp,
     Wallet,
 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
+import { useSidebar } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 
 const ADMIN_STATS_POLL_MS = 15_000;
@@ -26,6 +32,13 @@ type DashboardStats = {
     pending_requests_count: number;
 };
 
+type OrderStatusSlice = {
+    status: string;
+    label: string;
+    color: string;
+    count: number;
+};
+
 type SellerDashboardStats = {
     total_revenue: number;
     currency_en: string;
@@ -34,6 +47,13 @@ type SellerDashboardStats = {
     new_orders_count: number;
     invoices_count: number;
     storefront_visits_count: number;
+    orders_today_count: number;
+    orders_total_count: number;
+    order_status_breakdown: OrderStatusSlice[];
+    orders_monthly_trend: { label: string; value: number }[];
+    orders_first_at: string | null;
+    orders_last_at: string | null;
+    storefront_url: string | null;
 };
 
 const page = usePage<{
@@ -57,38 +77,72 @@ const pageTitle = computed(() => {
     return 'Dashboard';
 });
 
+const { toggleSidebar } = useSidebar();
+
 const sellerDashboardStats = computed(() => page.props.sellerDashboardStats);
 
-const sellerOrdersDenominator = computed(() => {
-    const s = sellerDashboardStats.value;
-    if (!s) {
-        return 1;
+const orderSearch = ref('');
+
+function goOrdersSearch(): void {
+    const q = orderSearch.value.trim();
+    router.visit(q === '' ? '/merchant/orders' : `/merchant/orders?q=${encodeURIComponent(q)}`);
+}
+
+function formatShortDate(iso: string | null): string {
+    if (iso === null || iso === '') {
+        return '—';
     }
-    return Math.max(1, s.confirmed_orders_count + s.new_orders_count);
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+        return '—';
+    }
+    return new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium' }).format(d);
+}
+
+const orderStatusPieStyle = computed(() => {
+    const s = sellerDashboardStats.value;
+    if (!s?.order_status_breakdown?.length) {
+        return { background: 'conic-gradient(#e5e7eb 0% 100%)' };
+    }
+    const slices = s.order_status_breakdown.filter((x) => x.count > 0);
+    const total = slices.reduce((a, x) => a + x.count, 0);
+    if (total === 0) {
+        return { background: 'conic-gradient(#e5e7eb 0% 100%)' };
+    }
+    let acc = 0;
+    const parts = slices.map((x) => {
+        const pct = (x.count / total) * 100;
+        const start = acc;
+        acc += pct;
+        return `${x.color} ${start}% ${acc}%`;
+    });
+    return { background: `conic-gradient(${parts.join(', ')})` };
 });
 
-const ordersPieStyle = computed(() => {
-    const s = sellerDashboardStats.value;
-    if (!s) {
-        return {};
-    }
-    const t = sellerOrdersDenominator.value;
-    const p = (s.confirmed_orders_count / t) * 100;
+const performanceLineChart = computed(() => {
+    const trend = sellerDashboardStats.value?.orders_monthly_trend ?? [];
+    const vals = trend.map((d) => d.value);
+    const max = Math.max(1, ...vals);
+    const w = 640;
+    const h = 240;
+    const padX = 36;
+    const padY = 28;
+    const innerW = w - padX * 2;
+    const innerH = h - padY * 2;
+    const n = trend.length;
+    const pts = trend.map((d, i) => {
+        const x = padX + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
+        const y = padY + innerH - (d.value / max) * innerH;
+        return `${x},${y}`;
+    });
     return {
-        background: `conic-gradient(hsl(198 62% 40%) 0% ${p}%, hsl(198 45% 68%) ${p}% 100%)`,
+        w,
+        h,
+        max,
+        points: pts.join(' '),
+        trend,
     };
 });
-
-const confirmedOrdersBarPct = computed(() => {
-    const s = sellerDashboardStats.value;
-    if (!s) {
-        return 0;
-    }
-    const t = sellerOrdersDenominator.value;
-    return Math.round((s.confirmed_orders_count / t) * 100);
-});
-
-const newOrdersBarPct = computed(() => Math.max(0, 100 - confirmedOrdersBarPct.value));
 
 const dashboardStats = computed(() => page.props.dashboardStats);
 
@@ -273,252 +327,276 @@ onUnmounted(() => {
             v-else-if="isSeller && sellerDashboardStats"
             dir="rtl"
             lang="ar"
-            class="flex flex-1 flex-col gap-5 p-4 md:gap-6 md:p-6"
+            class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-gray-50 dark:bg-background"
         >
-            <!-- صف المؤشرات الأساسية -->
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div
-                    class="flex items-center gap-4 rounded-2xl border border-white/60 bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:bg-card"
-                >
-                    <div
-                        class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                    >
-                        <Package class="size-6" stroke-width="1.75" />
-                    </div>
-                    <div class="min-w-0 flex-1 text-right">
-                        <p class="text-sm font-medium text-muted-foreground">المنتجات</p>
-                        <p
-                            class="mt-1 text-2xl font-bold tracking-tight tabular-nums text-foreground"
-                            dir="ltr"
-                            lang="en"
+            <header
+                class="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-3 dark:border-border dark:bg-card"
+            >
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex min-w-0 flex-1 items-center gap-3">
+                        <button
+                            type="button"
+                            class="rounded-lg p-2 text-gray-700 hover:bg-gray-100 dark:text-foreground dark:hover:bg-muted"
+                            aria-label="القائمة"
+                            @click="toggleSidebar"
                         >
-                            {{ formatEnInteger(sellerDashboardStats.products_count) }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-muted-foreground">في المتجر</p>
+                            <Menu class="size-5" stroke-width="2" />
+                        </button>
+                        <div class="relative hidden min-w-0 flex-1 sm:block sm:max-w-md">
+                            <Search
+                                class="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 text-gray-400"
+                                stroke-width="2"
+                                aria-hidden="true"
+                            />
+                            <input
+                                v-model="orderSearch"
+                                type="search"
+                                placeholder="بحث في الطلبات…"
+                                class="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-3 pr-10 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-border dark:bg-muted/40 dark:text-foreground"
+                                @keydown.enter.prevent="goOrdersSearch"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Link
+                            v-if="sellerDashboardStats.storefront_url"
+                            :href="sellerDashboardStats.storefront_url"
+                            class="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                        >
+                            التوجه للمتجر
+                        </Link>
+                        <Link
+                            href="/merchant/orders"
+                            class="relative rounded-lg p-2 text-gray-700 hover:bg-gray-100 dark:text-foreground dark:hover:bg-muted"
+                            aria-label="الطلبات"
+                        >
+                            <Bell class="size-5" stroke-width="2" />
+                            <span
+                                v-if="sellerDashboardStats.new_orders_count > 0"
+                                class="absolute right-1 top-1 size-2 rounded-full bg-red-500"
+                                aria-hidden="true"
+                            />
+                        </Link>
                     </div>
                 </div>
-                <div
-                    class="flex items-center gap-4 rounded-2xl border border-white/60 bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:bg-card"
-                >
-                    <div
-                        class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-700 dark:text-sky-400"
-                    >
-                        <ShoppingCart class="size-6" stroke-width="1.75" />
-                    </div>
-                    <div class="min-w-0 flex-1 text-right">
-                        <p class="text-sm font-medium text-muted-foreground">إجمالي الطلبات</p>
-                        <p
-                            class="mt-1 text-2xl font-bold tracking-tight tabular-nums text-foreground"
-                            dir="ltr"
-                            lang="en"
-                        >
-                            {{
-                                formatEnInteger(
-                                    sellerDashboardStats.confirmed_orders_count
-                                        + sellerDashboardStats.new_orders_count,
-                                )
-                            }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-muted-foreground">مؤكدة + قيد الانتظار</p>
-                    </div>
-                </div>
-                <div
-                    class="flex items-center gap-4 rounded-2xl border border-white/60 bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:bg-card"
-                >
-                    <div
-                        class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-teal-600/15 text-teal-800 dark:text-teal-400"
-                    >
-                        <Wallet class="size-6" stroke-width="1.75" />
-                    </div>
-                    <div class="min-w-0 flex-1 text-right">
-                        <p class="text-sm font-medium text-muted-foreground">إجمالي الإيرادات</p>
-                        <p
-                            class="mt-1 text-2xl font-bold leading-snug tracking-tight tabular-nums text-foreground"
-                            dir="ltr"
-                            lang="en"
-                        >
-                            {{ formatRevenue(sellerDashboardStats.total_revenue, sellerDashboardStats.currency_en) }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-muted-foreground">من الطلبات المؤكدة</p>
-                    </div>
-                </div>
-                <div
-                    class="flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:bg-card"
-                    :class="
-                        sellerDashboardStats.new_orders_count > 0
-                            ? 'border-amber-400/70 ring-1 ring-amber-400/30'
-                            : 'border-white/60 dark:border-border'
-                    "
-                >
-                    <div
-                        class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-800 dark:text-amber-400"
-                    >
-                        <Clock class="size-6" stroke-width="1.75" />
-                    </div>
-                    <div class="min-w-0 flex-1 text-right">
-                        <p class="text-sm font-medium text-muted-foreground">تحتاج إجراء</p>
-                        <p
-                            class="mt-1 text-2xl font-bold tracking-tight tabular-nums text-foreground"
-                            dir="ltr"
-                            lang="en"
-                        >
-                            {{ formatEnInteger(sellerDashboardStats.new_orders_count) }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-muted-foreground">طلبات بانتظارك</p>
-                    </div>
-                </div>
-            </div>
+            </header>
 
-            <!-- تحليلات مصغّرة -->
-            <div class="grid gap-4 lg:grid-cols-3">
-                <div
-                    class="flex items-center gap-4 rounded-2xl border border-white/60 bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:bg-card"
-                >
+            <div class="flex-1 overflow-auto p-4 md:p-6">
+                <div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <div
-                        class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-700 dark:text-violet-400"
+                        class="rounded-xl border border-gray-200 bg-orange-50 p-6 shadow-sm transition-shadow hover:shadow-md dark:border-border dark:bg-orange-950/20"
                     >
-                        <Eye class="size-6" stroke-width="1.75" />
+                        <div class="mb-3 flex items-center justify-between">
+                            <h3 class="text-sm text-gray-600 dark:text-muted-foreground">طلبات اليوم</h3>
+                            <div class="rounded-lg bg-white p-2 text-orange-500 shadow-sm dark:bg-card">
+                                <Activity class="size-5" stroke-width="2" />
+                            </div>
                     </div>
-                    <div class="min-w-0 flex-1 text-right">
-                        <p class="text-sm font-semibold text-foreground">زيارات المتجر</p>
-                        <p
-                            class="mt-1 text-3xl font-bold tracking-tight tabular-nums text-foreground"
-                            dir="ltr"
-                            lang="en"
-                        >
+                        <p class="text-2xl font-bold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">
+                            {{ formatEnInteger(sellerDashboardStats.orders_today_count) }}
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
+                            طلبات جديدة مسجّلة اليوم
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-xl border border-gray-200 bg-blue-50 p-6 shadow-sm transition-shadow hover:shadow-md dark:border-border dark:bg-blue-950/20"
+                    >
+                        <div class="mb-3 flex items-center justify-between">
+                            <h3 class="text-sm text-gray-600 dark:text-muted-foreground">إجمالي الزيارات</h3>
+                            <div class="rounded-lg bg-white p-2 text-blue-500 shadow-sm dark:bg-card">
+                                <TrendingUp class="size-5" stroke-width="2" />
+                            </div>
+                    </div>
+                        <p class="text-2xl font-bold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">
                             {{ formatEnInteger(sellerDashboardStats.storefront_visits_count) }}
                         </p>
-                        <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
-                            تقدير حسب الجلسة — مؤشر ظهور الرابط العام
+                        <p class="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
+                            وفق تتبّع الجلسات للرابط العام
                         </p>
+                    </div>
+                    <div
+                        class="rounded-xl border border-gray-200 bg-green-50 p-6 shadow-sm transition-shadow hover:shadow-md dark:border-border dark:bg-green-950/20"
+                    >
+                        <div class="mb-3 flex items-center justify-between">
+                            <h3 class="text-sm text-gray-600 dark:text-muted-foreground">إجمالي الطلبات</h3>
+                            <div class="rounded-lg bg-white p-2 text-green-600 shadow-sm dark:bg-card">
+                                <ShoppingCart class="size-5" stroke-width="2" />
+                            </div>
+                    </div>
+                        <p class="text-2xl font-bold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">
+                            {{ formatEnInteger(sellerDashboardStats.orders_total_count) }}
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-muted-foreground">
+                            كل الحالات — {{ formatEnInteger(sellerDashboardStats.products_count) }} منتج في المتجر
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-xl border border-gray-200 bg-purple-50 p-6 shadow-sm transition-shadow hover:shadow-md dark:border-border dark:bg-purple-950/20"
+                    >
+                        <div class="mb-3 flex items-center justify-between">
+                            <h3 class="text-sm text-gray-600 dark:text-muted-foreground">تحتاج إجراء</h3>
+                            <div class="rounded-lg bg-white p-2 text-purple-600 shadow-sm dark:bg-card">
+                                <FileText class="size-5" stroke-width="2" />
+                            </div>
+                    </div>
+                        <p class="text-2xl font-bold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">
+                            {{ formatEnInteger(sellerDashboardStats.new_orders_count) }}
+                        </p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-muted-foreground">في انتظارك</p>
                     </div>
                 </div>
 
-                <div
-                    class="rounded-2xl border border-white/60 bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:bg-card"
-                >
-                    <p class="text-sm font-semibold text-foreground">حالة الطلبات</p>
-                    <p class="mt-1 text-xs text-muted-foreground">نسبة مؤكدة مقابل بانتظار الإجراء</p>
-                    <div class="mt-4 flex items-center gap-5">
-                        <div
-                            class="relative size-28 shrink-0 rounded-full shadow-inner"
-                            :style="ordersPieStyle"
-                            role="img"
-                            :aria-label="
-                                `مؤكدة ${confirmedOrdersBarPct}٪، جديدة ${newOrdersBarPct}٪`
-                            "
-                        />
-                        <ul class="min-w-0 flex-1 space-y-2 text-sm">
-                            <li class="flex items-center gap-2">
-                                <span
-                                    class="size-2.5 shrink-0 rounded-full bg-[hsl(198_62%_40%)]"
-                                    aria-hidden="true"
-                                />
-                                <span class="text-muted-foreground">مؤكدة</span>
-                                <span class="ms-auto font-semibold tabular-nums" dir="ltr">{{
-                                    formatEnInteger(sellerDashboardStats.confirmed_orders_count)
+                <div class="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div class="rounded-xl border border-gray-200 bg-white p-6 dark:border-border dark:bg-card">
+                        <div class="mb-4 flex items-center justify-between gap-2">
+                            <h2 class="text-lg font-bold text-gray-900 dark:text-foreground">توزيع الطلبات</h2>
+                            <Link
+                                href="/merchant/orders"
+                                class="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                            >
+                                <Calendar class="size-4" stroke-width="2" />
+                                تفاصيل
+                            </Link>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600 dark:text-muted-foreground">من التاريخ</span>
+                                <span class="font-medium text-gray-900 dark:text-foreground">{{
+                                    formatShortDate(sellerDashboardStats.orders_first_at)
                                 }}</span>
-                            </li>
-                            <li class="flex items-center gap-2">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600 dark:text-muted-foreground">إلى التاريخ</span>
+                                <span class="font-medium text-gray-900 dark:text-foreground">{{
+                                    formatShortDate(sellerDashboardStats.orders_last_at)
+                                }}</span>
+                            </div>
+                            <div class="my-4 h-px bg-gray-200 dark:bg-border" />
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-600 dark:text-muted-foreground">عدد الطلبات</span>
+                                <span class="text-2xl font-bold text-indigo-600 tabular-nums dark:text-indigo-400" dir="ltr">{{
+                                    formatEnInteger(sellerDashboardStats.orders_total_count)
+                                }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-600 dark:text-muted-foreground">إجمالي المستلم</span>
+                                <span class="font-semibold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">{{
+                                    formatRevenue(
+                                        sellerDashboardStats.total_revenue,
+                                        sellerDashboardStats.currency_en,
+                                    )
+                                }}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-muted-foreground">
+                                <span>الفواتير: <span class="font-semibold tabular-nums text-gray-800 dark:text-foreground" dir="ltr">{{ formatEnInteger(sellerDashboardStats.invoices_count) }}</span></span>
+                                <span>مؤكدة: <span class="font-semibold tabular-nums text-gray-800 dark:text-foreground" dir="ltr">{{ formatEnInteger(sellerDashboardStats.confirmed_orders_count) }}</span></span>
+                            </div>
+                            <Link
+                                href="/merchant/orders"
+                                class="mt-4 flex w-full items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                            >
+                                عرض الطلبات
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl border border-gray-200 bg-white p-6 dark:border-border dark:bg-card">
+                        <h2 class="mb-1 text-lg font-bold text-gray-900 dark:text-foreground">حالة الطلبات</h2>
+                        <p class="mb-6 text-sm text-gray-500 dark:text-muted-foreground">
+                            توزيع فعلي حسب حالة كل طلب في متجرك
+                        </p>
+                        <div class="flex h-48 items-center justify-center">
+                            <div
+                                class="size-40 rounded-full shadow-inner ring-1 ring-black/5 dark:ring-white/10"
+                                :style="orderStatusPieStyle"
+                                role="img"
+                                aria-label="توزيع حالات الطلب"
+                            />
+                        </div>
+                        <ul class="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2">
+                            <li
+                                v-for="row in sellerDashboardStats.order_status_breakdown"
+                                :key="row.status"
+                                class="flex items-center gap-2 text-sm text-gray-600 dark:text-muted-foreground"
+                            >
                                 <span
-                                    class="size-2.5 shrink-0 rounded-full bg-[hsl(198_45%_68%)]"
+                                    class="size-3 shrink-0 rounded-full"
+                                    :style="{ backgroundColor: row.color }"
                                     aria-hidden="true"
                                 />
-                                <span class="text-muted-foreground">قيد الانتظار</span>
-                                <span class="ms-auto font-semibold tabular-nums" dir="ltr">{{
-                                    formatEnInteger(sellerDashboardStats.new_orders_count)
+                                <span>{{ row.label }}:</span>
+                                <span class="font-semibold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">{{
+                                    formatEnInteger(row.count)
                                 }}</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
-                <div
-                    class="rounded-2xl border border-white/60 bg-white p-5 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:bg-card"
-                >
-                        <p class="text-sm font-semibold text-foreground">توزيع الطلبات</p>
-                    <p class="mt-1 text-xs text-muted-foreground">شريط نسبي من إجمالي الطلبات</p>
-                    <div class="mt-5 space-y-4">
-                        <div>
-                            <div class="mb-1 flex justify-between text-xs">
-                                <span class="text-muted-foreground">مؤكدة</span>
-                                <span class="tabular-nums font-medium" dir="ltr"
-                                    >{{ confirmedOrdersBarPct }}٪</span
-                                >
-                            </div>
-                            <div
-                                class="h-2.5 overflow-hidden rounded-full bg-muted"
-                            >
-                                <div
-                                    class="h-full rounded-full bg-[hsl(198_62%_42%)] transition-all"
-                                    :style="{ width: `${confirmedOrdersBarPct}%` }"
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <div class="mb-1 flex justify-between text-xs">
-                                <span class="text-muted-foreground">قيد الانتظار</span>
-                                <span class="tabular-nums font-medium" dir="ltr"
-                                    >{{ newOrdersBarPct }}٪</span
-                                >
-                            </div>
-                            <div
-                                class="h-2.5 overflow-hidden rounded-full bg-muted"
-                            >
-                                <div
-                                    class="h-full rounded-full bg-[hsl(198_45%_58%)] transition-all"
-                                    :style="{ width: `${newOrdersBarPct}%` }"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    <p class="mt-4 text-xs text-muted-foreground">
-                        الفواتير:
-                        <span class="font-semibold tabular-nums text-foreground" dir="ltr">{{
-                            formatEnInteger(sellerDashboardStats.invoices_count)
-                        }}</span>
+                <div class="mb-6 rounded-xl border border-gray-200 bg-white p-6 dark:border-border dark:bg-card">
+                    <h2 class="mb-2 text-lg font-bold text-gray-900 dark:text-foreground">نقاط على الطريق</h2>
+                    <p class="mb-4 text-sm text-gray-500 dark:text-muted-foreground">
+                        أرقام حسب مرحلة الطلب — بيانات مباشرة من آخر تحديث
                     </p>
+                    <div class="flex flex-wrap gap-3">
+                        <div
+                            v-for="row in sellerDashboardStats.order_status_breakdown"
+                            :key="`road-${row.status}`"
+                            class="min-w-[8.5rem] flex-1 rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-center dark:border-border dark:bg-muted/40"
+                        >
+                            <p class="text-xs text-gray-500 dark:text-muted-foreground">{{ row.label }}</p>
+                            <p class="mt-1 text-xl font-bold tabular-nums text-gray-900 dark:text-foreground" dir="ltr">
+                                {{ formatEnInteger(row.count) }}
+                            </p>
+                        </div>
                 </div>
             </div>
 
-            <!-- صف تحليلي日后ي -->
-            <div
-                class="rounded-2xl border border-white/60 bg-gradient-to-br from-white to-[hsl(198_40%_96%)] p-6 shadow-[0_8px_30px_rgb(17_17_17_/_0.06)] dark:border-border dark:from-card dark:to-card"
-            >
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                        <p class="text-sm font-semibold text-foreground">نظرة على الأداء</p>
-                        <p class="mt-1 max-w-xl text-sm text-muted-foreground">
-                            تفاصيل زمنية وتقارير مفصّلة ستتوفر لاحقاً؛ حالياً ركّز على الطلبات الجديدة وتحديث
-                            المنتجات.
-                        </p>
-                    </div>
-                    <div
-                        class="hidden h-24 w-40 shrink-0 rounded-xl border border-[hsl(198_45%_85%)] bg-white/80 sm:block dark:border-border dark:bg-card"
-                    >
+                <div class="rounded-xl border border-gray-200 bg-white p-6 dark:border-border dark:bg-card">
+                    <h2 class="mb-4 text-lg font-bold text-gray-900 dark:text-foreground">إحصائيات الأداء</h2>
+                    <p class="mb-4 text-sm text-gray-500 dark:text-muted-foreground">
+                        عدد الطلبات المسجّلة شهرياً (آخر ٦ أشهر)
+                    </p>
+                    <div class="h-64 w-full overflow-x-auto">
                         <svg
-                            class="size-full text-[hsl(198_55%_45%)]"
-                            viewBox="0 0 120 60"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            aria-hidden="true"
+                            class="min-w-[320px] text-indigo-600 dark:text-indigo-400"
+                            :viewBox="`0 0 ${performanceLineChart.w} ${performanceLineChart.h}`"
+                            role="img"
+                            aria-label="منحنى الطلبات الشهرية"
                         >
-                            <path
-                                d="M4 48 L24 32 L44 38 L64 18 L84 28 L104 12 L116 8"
+                            <line
+                                x1="36"
+                                :y1="performanceLineChart.h - 28"
+                                :x2="performanceLineChart.w - 36"
+                                :y2="performanceLineChart.h - 28"
+                                stroke="currentColor"
+                                stroke-opacity="0.15"
+                                stroke-width="1"
+                            />
+                            <polyline
+                                fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
-                                opacity="0.85"
+                                :points="performanceLineChart.points"
                             />
-                            <path
-                                d="M4 48 L24 36 L44 40 L64 26 L84 34 L104 22 L116 20"
-                                stroke="currentColor"
-                                stroke-width="1.5"
-                                stroke-linecap="round"
-                                stroke-dasharray="4 3"
-                                opacity="0.45"
-                            />
+                            <g
+                                v-for="(d, i) in performanceLineChart.trend"
+                                :key="`lbl-${i}`"
+                            >
+                                <text
+                                    :x="36 + (performanceLineChart.trend.length <= 1 ? (performanceLineChart.w - 72) / 2 : (i / (performanceLineChart.trend.length - 1)) * (performanceLineChart.w - 72))"
+                                    :y="performanceLineChart.h - 8"
+                                    fill="currentColor"
+                                    fill-opacity="0.55"
+                                    font-size="11"
+                                    text-anchor="middle"
+                                >
+                                    {{ d.label }}
+                                </text>
+                            </g>
                         </svg>
                     </div>
                 </div>

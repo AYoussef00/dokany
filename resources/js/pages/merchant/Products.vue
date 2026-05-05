@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import { ImagePlus, MoreHorizontal, Pencil, Plus, Trash2, X } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
@@ -28,16 +28,31 @@ export type ProductRow = {
     name: string;
     description: string;
     price: number;
+    storefront_category: string;
+    storefront_category_label: string;
     images: { id: number; url: string }[];
 };
 
 const props = defineProps<{
     products: ProductRow[];
+    categoryOptions: { value: string; label: string }[];
+    filterCategory?: string | null;
     productCurrencyAr: string;
     productCurrencyEn: string;
 }>();
 
 const productsCount = computed(() => props.products.length);
+
+const defaultCategoryValue = computed(
+    () => props.categoryOptions[0]?.value ?? 'new_in',
+);
+
+const filterCategoryLabel = computed(() => {
+    if (props.filterCategory === null || props.filterCategory === '') {
+        return null;
+    }
+    return props.categoryOptions.find((c) => c.value === props.filterCategory)?.label ?? null;
+});
 
 defineOptions({
     layout: {
@@ -66,6 +81,7 @@ const form = useForm({
     name: '',
     description: '',
     price: '',
+    storefront_category: props.categoryOptions[0]?.value ?? 'new_in',
     images: [] as File[],
 });
 
@@ -73,6 +89,7 @@ const editForm = useForm({
     name: '',
     description: '',
     price: '',
+    storefront_category: '',
     remove_image_ids: [] as number[],
     images: [] as File[],
 });
@@ -119,12 +136,14 @@ const canSubmit = computed(
         && form.price !== ''
         && Number.isFinite(Number(form.price))
         && Number(form.price) >= 0
+        && form.storefront_category !== ''
         && selectedFiles.value.length >= 1,
 );
 
 function resetAddProductForm(): void {
     form.reset();
     form.clearErrors();
+    form.storefront_category = defaultCategoryValue.value;
     selectedFiles.value = [];
     revokeAllPreviews();
     if (imagesInputRef.value) {
@@ -190,6 +209,7 @@ function openEdit(product: ProductRow): void {
     editForm.name = product.name;
     editForm.description = product.description;
     editForm.price = String(product.price);
+    editForm.storefront_category = product.storefront_category;
     editForm.remove_image_ids = [];
     editForm.images = [];
     editSelectedFiles.value = [];
@@ -249,6 +269,7 @@ const canSubmitEdit = computed(
         && editForm.price !== ''
         && Number.isFinite(Number(editForm.price))
         && Number(editForm.price) >= 0
+        && editForm.storefront_category !== ''
         && editTotalImageCount.value >= 1
         && editTotalImageCount.value <= 10,
 );
@@ -332,6 +353,19 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
         </div>
 
         <div
+            v-if="filterCategory && filterCategoryLabel"
+            class="flex flex-col gap-3 rounded-xl border border-sidebar-border/70 bg-muted/25 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border"
+        >
+            <p class="text-sm text-foreground">
+                <span class="text-muted-foreground">تصفية حسب الصنف:</span>
+                <span class="ms-1 font-medium">{{ filterCategoryLabel }}</span>
+            </p>
+            <Button as-child variant="outline" size="sm" class="shrink-0">
+                <Link href="/merchant/products">عرض كل المنتجات</Link>
+            </Button>
+        </div>
+
+        <div
             class="flex flex-col gap-4 rounded-xl border border-sidebar-border/70 p-6 sm:flex-row sm:items-center sm:justify-between dark:border-sidebar-border"
         >
             <p class="text-sm text-muted-foreground">
@@ -393,6 +427,25 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
                                 dir="ltr"
                             />
                             <InputError :message="form.errors.price" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="product-category">الصنف</Label>
+                            <select
+                                id="product-category"
+                                v-model="form.storefront_category"
+                                name="storefront_category"
+                                class="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <option
+                                    v-for="opt in categoryOptions"
+                                    :key="opt.value"
+                                    :value="opt.value"
+                                >
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                            <InputError :message="form.errors.storefront_category" />
                         </div>
 
                         <div class="grid gap-2">
@@ -531,6 +584,25 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
                                 dir="ltr"
                             />
                             <InputError :message="editForm.errors.price" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="edit-product-category">الصنف</Label>
+                            <select
+                                id="edit-product-category"
+                                v-model="editForm.storefront_category"
+                                name="storefront_category"
+                                class="border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <option
+                                    v-for="opt in categoryOptions"
+                                    :key="opt.value"
+                                    :value="opt.value"
+                                >
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                            <InputError :message="editForm.errors.storefront_category" />
                         </div>
 
                         <div class="grid gap-2">
@@ -680,15 +752,16 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
             class="overflow-hidden rounded-xl border border-sidebar-border/70 bg-card shadow-sm dark:border-sidebar-border"
         >
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[58rem] table-fixed border-collapse text-sm" dir="rtl">
+                <table class="w-full min-w-[64rem] table-fixed border-collapse text-sm" dir="rtl">
                     <colgroup>
-                        <col style="width: 7%;" />
-                        <col style="width: 10%;" />
-                        <col style="width: 18%;" />
+                        <col style="width: 6%;" />
+                        <col style="width: 9%;" />
+                        <col style="width: 16%;" />
                         <col style="width: 12%;" />
-                        <col style="width: 30%;" />
                         <col style="width: 11%;" />
-                        <col style="width: 12%;" />
+                        <col style="width: 26%;" />
+                        <col style="width: 9%;" />
+                        <col style="width: 11%;" />
                     </colgroup>
                     <thead>
                         <tr class="border-b border-border bg-muted/40" dir="rtl">
@@ -709,6 +782,12 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
                                 class="box-border px-3 py-2 text-start text-sm font-medium text-muted-foreground"
                             >
                                 اسم المنتج
+                            </th>
+                            <th
+                                scope="col"
+                                class="box-border px-3 py-2 text-start text-sm font-medium text-muted-foreground"
+                            >
+                                الصنف
                             </th>
                             <th
                                 scope="col"
@@ -757,7 +836,7 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
                                         class="relative size-11 shrink-0 overflow-hidden rounded-lg border border-sidebar-border/60 bg-muted/40 dark:border-sidebar-border"
                                     >
                                         <img
-                                            v-if="product.images[0]"
+                                            v-if="product.images?.[0]"
                                             :src="product.images[0].url"
                                             :alt="product.name"
                                             class="size-full object-cover"
@@ -783,6 +862,14 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
                             </td>
                             <td class="box-border px-3 py-2 align-middle text-start" dir="rtl">
                                 <span
+                                    class="block min-w-0 truncate text-sm text-muted-foreground"
+                                    :title="product.storefront_category_label"
+                                >
+                                    {{ product.storefront_category_label }}
+                                </span>
+                            </td>
+                            <td class="box-border px-3 py-2 align-middle text-start" dir="rtl">
+                                <span
                                     class="block min-w-0 truncate tabular-nums text-[#9a7349] dark:text-[#d4b896] text-right"
                                     dir="ltr"
                                 >
@@ -803,7 +890,7 @@ const flashSuccess = computed(() => page.props.flash?.success ?? null);
                                     class="block min-w-0 truncate tabular-nums text-muted-foreground text-right"
                                     dir="ltr"
                                 >
-                                    {{ product.images.length }}
+                                    {{ product.images?.length ?? 0 }}
                                 </span>
                             </td>
                             <td class="box-border px-3 py-2 align-middle text-center" dir="rtl">

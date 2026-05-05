@@ -26,8 +26,16 @@ class MerchantPanelRoutesTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('merchant/Products')
                 ->has('products')
+                ->has('categoryOptions')
+                ->where('filterCategory', null)
                 ->has('productCurrencyEn')
                 ->has('productCurrencyAr'));
+
+        $this->get('/merchant/categories')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('merchant/Categories')
+                ->has('categories', 4));
 
         $this->get('/merchant/invoices')
             ->assertOk()
@@ -51,7 +59,7 @@ class MerchantPanelRoutesTest extends TestCase
 
         $this->actingAs($admin);
 
-        foreach (['/merchant/products', '/merchant/invoices', '/merchant/payments'] as $uri) {
+        foreach (['/merchant/products', '/merchant/categories', '/merchant/invoices', '/merchant/payments'] as $uri) {
             $this->get($uri)->assertForbidden();
         }
     }

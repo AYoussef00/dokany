@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StorefrontOrder;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -25,7 +26,9 @@ class CheckoutController extends Controller
             'seller' => [
                 'store_slug' => $seller->store_slug,
                 'name' => $seller->name,
-                'logo_url' => $seller->store_logo_url,
+                'logo_url' => ($seller->store_logo_path !== null && $seller->store_logo_path !== '')
+                    ? User::publicStorageUrl($seller->store_logo_path)
+                    : null,
                 'instapay_wallet' => $seller->instapay_wallet !== null && trim($seller->instapay_wallet) !== ''
                     ? trim($seller->instapay_wallet)
                     : null,

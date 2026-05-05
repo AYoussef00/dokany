@@ -1,591 +1,238 @@
 <script setup lang="ts">
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import {
-    ArrowLeft,
-    BadgeCheck,
     Check,
     ChevronDown,
     CircleUser,
+    Copy,
     Facebook,
-    FileText,
-    Instagram,
-    LayoutGrid,
+    Linkedin,
+    Link2,
+    Mail,
+    Lock,
     Package,
-    Share2,
-    ShoppingBag,
-    Smartphone,
-    Sparkles,
+    Phone,
     Star,
-    Store,
-    Wallet,
+    Twitter,
+    User,
+    Youtube,
+    Zap,
 } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { dashboard, login, register } from '@/routes';
-import type { User } from '@/types';
+import type { User as AuthUser } from '@/types';
 
-const openFaq = ref<number | null>(0);
-
-const page = usePage<{ auth: { user: User | null } }>();
+const openFaq = ref<number | null>(null);
+const copied = ref(false);
+const page = usePage<{ auth: { user: AuthUser | null } }>();
 const isAuthenticated = computed(() => page.props.auth.user !== null);
 
-const faqs = [
-    {
-        q: 'هل أحتاج موقع إلكتروني أو خبرة تقنية؟',
-        a: 'لا. دكاني يمنحك صفحة متجر جاهزة يمكن مشاركتها كرابط على إنستغرام أو واتساب. كل شيء من جهة واحدة.',
-    },
-    {
-        q: 'كيف يعمل الدفع عبر إنستاباي؟',
-        a: 'يعرض المتجر تعليمات الدفع للعميل، ويرفع إثبات التحويل. أنت تؤكد الاستلام من لوحة التحكم ويُحدَّث الطلب تلقائياً.',
-    },
-    {
-        q: 'هل يمكن إضافة منتجات غير محدودة؟',
-        a: 'نعم ضمن باقة الاشتراك الشهرية. يمكنك إدارة المخزون والأسعار والصور في أي وقت.',
-    },
-    {
-        q: 'هل مناسب لمبيعات واتساب وإنستغرام؟',
-        a: 'مصمم خصيصاً لذلك: رابط واحد، طلبات منظمة، فواتير، وتأكيد يدوي يناسب طريقة عمل البائعين في المنطقة.',
-    },
-];
-
 const features = [
-    {
-        icon: Store,
-        title: 'متجر خاص بك',
-        desc: 'صفحة علامتك، رابط قصير، وهوية متسقة مع عملك.',
-    },
-    {
-        icon: ShoppingBag,
-        title: 'استقبال الطلبات',
-        desc: 'استلام الطلبات من العملاء بتدفق واضح وتنبيهات.',
-    },
-    {
-        icon: Wallet,
-        title: 'الدفع عبر InstaPay',
-        desc: 'تعليمات دفع واضحة ورفع إثباتات التحويل بسهولة.',
-    },
-    {
-        icon: LayoutGrid,
-        title: 'إدارة المنتجات',
-        desc: 'صور، أسعار، وخيارات بسيطة دون تعقيد.',
-    },
-    {
-        icon: FileText,
-        title: 'فواتير ومدفوعات',
-        desc: 'سجل مالي منظم للطلبات والمدفوعات المؤكدة.',
-    },
-    {
-        icon: BadgeCheck,
-        title: 'تأكيد الطلبات',
-        desc: 'مراجعة الإثبات وقبول أو رفض الدفع بضغطة.',
-    },
+    { icon: Zap, title: 'جاهز في دقايق', description: 'إنشئ متجرك الإلكتروني في أقل من 5 دقايق بدون أي خبرة تقنية' },
+    { icon: Link2, title: 'لينك خاص بيك', description: 'احصل على رابط مخصص لمتجرك وشاركه مع عملائك في أي مكان' },
+    { icon: Package, title: 'منتجات لا نهائية', description: 'ضيف عدد غير محدود من المنتجات والصور بكل سهولة' },
 ];
 
-const steps = [
-    { n: '١', title: 'أنشئ متجرك', desc: 'سجّل، ضع اسم المتجر والشعار، وأضف منتجاتك الأولى.', icon: Sparkles },
-    { n: '٢', title: 'شارك الرابط', desc: 'أرسل الرابط في البايو، الحالة، أو جماعات واتساب.', icon: Share2 },
-    { n: '٣', title: 'استقبل الطلبات والدفع', desc: 'تابع الطلبات، أكّد المدفوعات، وأصدر الفواتير.', icon: Package },
+const pricingFeatures = [
+    'متجر جاهز في دقايق معدودة',
+    'لينك خاص ومميز بمتجرك',
+    'منتجات لا نهائية بدون حدود',
+    'إدارة الطلبات والعملاء',
+    'دعم فني سريع ومجاني',
 ];
 
-const testimonials = [
-    {
-        name: 'سارة محمود',
-        role: 'متجر إكسسوارات • القاهرة',
-        quote:
-            'من ساعة ما استخدمنا دكاني، الطلبات ما بقتش تضيع في الشات. الشهر اللي فات ضاعفنا الطلبات تقريباً.',
-    },
-    {
-        name: 'كريم عبد اللطيف',
-        role: 'بيع منتجات عناية • الإسكندرية',
-        quote:
-            'إثبات إنستاباي رفع العميل وباقي الدنيا منظمة في لوحة واحدة. راحة نفسية للتيم كله.',
-    },
-    {
-        name: 'نورا حامد',
-        role: 'متجر هدايا handmade • المنصورة',
-        quote:
-            'الواجهة نظيفة والعميل يفهم يدفع إزاي بدون ما نكرر نفس الكلام في كل مرة.',
-    },
+const reviews = [
+    { name: 'أحمد سعيد', role: 'صاحب متجر ملابس', text: 'والله فعلاً عملت متجري في 3 دقايق وبدأت البيع من أول يوم، حاجة خرافية!', rating: 5 },
+    { name: 'منى حسن', role: 'بائعة إكسسوارات', text: 'من أحسن القرارات اللي اتخذتها، اللينك بتاعي بوصل لكل عملائي بسهولة', rating: 5 },
+    { name: 'كريم محمود', role: 'تاجر إلكترونيات', text: 'ضيفت أكتر من 200 منتج بكل سهولة، المنصة دي غيرت شغلي تماماً', rating: 5 },
 ];
 
-function toggleFaq(i: number): void {
-    openFaq.value = openFaq.value === i ? null : i;
+const faqs = [
+    { question: 'فعلاً هينشأ في دقايق؟', answer: 'أيوه طبعاً! في أقل من 5 دقايق هيكون عندك متجرك الخاص جاهز تماماً وتقدر تبدأ تضيف منتجاتك.' },
+    { question: 'اللينك بتاع المتجر هيكون إزاي؟', answer: 'هتاخد لينك مخصوص ليك وتقدر تشاركه مع عملائك على الواتساب والفيسبوك وأي مكان.' },
+    { question: 'في حد أقصى لعدد المنتجات؟', answer: 'لا خالص! ضيف عدد المنتجات اللي انت عايزه، مفيش أي حدود على الإطلاق.' },
+    { question: 'لو محتاج مساعدة هعمل إيه؟', answer: 'فريق الدعم الفني موجود على طول، تواصل معنا وهنساعدك في أي حاجة.' },
+];
+
+function handleCopyLink(): void {
+    copied.value = true;
+    setTimeout(() => {
+        copied.value = false;
+    }, 2000);
 }
-
-function scrollToId(id: string): void {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-const testimonialSliderRef = ref<HTMLElement | null>(null);
-const activeTestimonialIndex = ref(0);
-let testimonialObserver: IntersectionObserver | null = null;
-
-function scrollToTestimonial(i: number): void {
-    const root = testimonialSliderRef.value;
-    const el = root?.querySelector<HTMLElement>(`[data-testimonial-index="${i}"]`);
-    el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-}
-
-onMounted(() => {
-    const root = testimonialSliderRef.value;
-    if (!root) {
-        return;
-    }
-    const slides = root.querySelectorAll<HTMLElement>('[data-testimonial-index]');
-    testimonialObserver = new IntersectionObserver(
-        (entries) => {
-            let best: { idx: number; ratio: number } | null = null;
-            for (const entry of entries) {
-                if (!entry.isIntersecting) {
-                    continue;
-                }
-                const idxAttr = entry.target.getAttribute('data-testimonial-index');
-                if (idxAttr === null) {
-                    continue;
-                }
-                const idx = Number.parseInt(idxAttr, 10);
-                const ratio = entry.intersectionRatio;
-                if (!best || ratio > best.ratio) {
-                    best = { idx, ratio };
-                }
-            }
-            if (best) {
-                activeTestimonialIndex.value = best.idx;
-            }
-        },
-        { root, threshold: [0.45, 0.55, 0.65, 0.75], rootMargin: '-8px 0px' },
-    );
-    slides.forEach((slide) => testimonialObserver?.observe(slide));
-});
-
-onBeforeUnmount(() => {
-    testimonialObserver?.disconnect();
-    testimonialObserver = null;
-});
 </script>
 
 <template>
-    <Head title="اطلق متجرك مع دكاني">
+    <Head title="إنشئ متجرك في دقايق">
+        <meta name="description" content="إنشئ متجرك الإلكتروني في أقل من 5 دقايق، شارك لينك متجرك وابدأ البيع فورًا." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
         <link
             href="https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Arimo:ital,wght@0,400..700;1,400..700&family=Changa:wght@200..800&display=swap"
             rel="stylesheet"
         />
-        <meta name="description" content="اطلق متجرك مع دكاني — متجر، طلبات، وإنستاباي في مكان واحد. للبائعين على إنستغرام وواتساب." />
     </Head>
 
-    <div
-        dir="rtl"
-        lang="ar"
-        class="dokany-landing min-h-screen bg-[#F8F8F7] text-[#111111] antialiased selection:bg-[#C8A97E]/25"
-    >
-        <div
-            class="relative z-10 mx-auto min-h-screen max-w-[430px] bg-white shadow-[0_4px_40px_-12px_rgba(17,17,17,0.06)] sm:my-8 sm:min-h-[calc(100vh-4rem)] sm:rounded-2xl sm:ring-1 sm:ring-[#E6E5E2]"
+    <div dir="rtl" lang="ar" class="dokany-landing min-h-screen bg-gray-50 text-gray-900">
+        <section
+            class="relative isolate overflow-hidden bg-[#040b27] text-white"
         >
-            <main>
+            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_88%_88%,rgba(119,61,255,0.45),transparent_55%),radial-gradient(90%_70%_at_10%_12%,rgba(58,105,255,0.22),transparent_55%),linear-gradient(135deg,#030614_0%,#070d2c_42%,#05081f_100%)]" />
+            <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,rgba(1,4,20,0.72),rgba(1,4,20,0.45))]" />
+            <div class="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-black/30 blur-3xl" />
+            <div class="pointer-events-none absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-violet-600/25 blur-3xl" />
+
+            <div class="relative mx-auto max-w-6xl px-6 py-20 text-center">
+                <div class="mb-8 flex items-center justify-between">
+                    <Link
+                        v-if="isAuthenticated"
+                        :href="dashboard()"
+                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 hover:bg-white/10"
+                        aria-label="الذهاب إلى لوحة التحكم"
+                    >
+                        <CircleUser class="h-5 w-5" />
+                    </Link>
+                    <Link v-else :href="login()" class="rounded-lg border border-white/20 px-4 py-2 text-sm hover:bg-white/10">
+                        تسجيل الدخول
+                    </Link>
+                    <span dir="ltr" class="text-xl font-black tracking-wide text-white">Dokany</span>
+                </div>
+                <h1 class="mb-6 text-4xl font-bold leading-tight md:text-5xl">
+                    إنشئ متجرك الإلكتروني
+                    <br />
+                    في أقل من 5 دقايق
+                </h1>
+                <p class="mb-8 text-lg text-white/80">
+                    لينك خاص بيك، منتجات لا نهائية، وعملاء أكتر - كل ده بدون تعقيدات
+                </p>
+                <div class="mb-12 flex justify-center gap-4">
+                    <a href="#" class="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur hover:bg-white/20"><Facebook class="h-5 w-5" /></a>
+                    <a href="#" class="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur hover:bg-white/20"><Twitter class="h-5 w-5" /></a>
+                    <a href="#" class="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur hover:bg-white/20"><Linkedin class="h-5 w-5" /></a>
+                    <a href="#" class="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 backdrop-blur hover:bg-white/20"><Youtube class="h-5 w-5" /></a>
+                </div>
+                <Link :href="isAuthenticated ? dashboard() : register()" class="inline-flex rounded-lg bg-white px-8 py-3 font-semibold text-purple-900 hover:bg-purple-50">
+                    {{ isAuthenticated ? 'الذهاب للوحة التحكم' : 'إنشئ متجرك مجاناً' }}
+                </Link>
+            </div>
+        </section>
+
+        <section class="bg-white py-16">
+            <div class="mx-auto max-w-6xl px-6">
+                <h2 class="mb-12 text-center text-3xl font-bold">إزاي تبدأ في 3 خطوات بس؟</h2>
+                <div class="grid gap-8 md:grid-cols-3">
+                    <div class="text-center"><div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-purple-900 text-3xl font-bold text-white">1</div><h3 class="mb-3 text-xl font-bold">سجل حسابك</h3><p class="text-gray-600">اكتب بياناتك البسيطة وخلاص</p></div>
+                    <div class="text-center"><div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-purple-900 text-3xl font-bold text-white">2</div><h3 class="mb-3 text-xl font-bold">ضيف منتجاتك</h3><p class="text-gray-600">حط صور منتجاتك والأسعار بكل سهولة</p></div>
+                    <div class="text-center"><div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-purple-900 text-3xl font-bold text-white">3</div><h3 class="mb-3 text-xl font-bold">شارك لينكك</h3><p class="text-gray-600">وزع اللينك بتاع متجرك وابدأ البيع</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gradient-to-br from-purple-50 to-white py-16">
+            <div class="mx-auto max-w-4xl px-6 text-center">
+                <h2 class="mb-4 text-3xl font-bold">هيكون عندك لينك خاص زي ده</h2>
+                <p class="mb-8 text-gray-600">شاركه مع عملائك على الواتساب والفيسبوك وأي مكان</p>
                 <div
-                    class="overflow-hidden bg-[#1f0433] text-white sm:rounded-t-2xl"
+                    class="mx-auto flex w-full max-w-[680px] items-center justify-between gap-3 rounded-2xl border-2 border-purple-200 bg-white px-4 py-4 shadow-lg sm:gap-4 sm:px-6"
                 >
-                    <header
-                        class="sticky top-0 z-20 border-b border-white/15 bg-[#1f0433]/90 backdrop-blur-xl backdrop-saturate-150"
+                    <button class="rounded-lg bg-purple-900 p-3 text-white hover:bg-purple-800" @click="handleCopyLink">
+                        <Check v-if="copied" class="h-5 w-5" />
+                        <Copy v-else class="h-5 w-5" />
+                    </button>
+                    <span
+                        class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-center text-lg font-bold text-purple-900 sm:text-2xl"
+                        dir="ltr"
                     >
-                        <div class="flex items-center justify-between px-6 py-4">
-                            <Link
-                                v-if="isAuthenticated"
-                                :href="dashboard()"
-                                class="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white transition hover:border-white/40 hover:bg-white/15 active:scale-[0.97]"
-                                aria-label="لوحة التحكم"
-                            >
-                                <CircleUser class="h-[22px] w-[22px]" stroke-width="1.75" />
-                            </Link>
-                            <Link
-                                v-else
-                                :href="login()"
-                                class="text-[15px] font-semibold text-[#E8D4B5] transition hover:text-[#f5ead8] hover:underline"
-                            >
-                                تسجيل الدخول
-                            </Link>
-                            <Link
-                                href="/"
-                                dir="ltr"
-                                class="shrink-0 text-[22px] font-black tracking-wide text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] transition hover:text-[#f5ead8] sm:text-2xl"
-                                aria-label="Dokany"
-                            >
-                                Dokany
-                            </Link>
-                        </div>
-                    </header>
-
-                    <!-- Hero -->
-                    <section class="relative px-6 pb-14 pt-10">
-                        <h1
-                            class="mb-5 flex flex-col items-center gap-4 text-center text-[36px] font-extrabold leading-[1.4] tracking-[-0.02em] text-white"
-                        >
-                            <span class="block max-w-[20ch]">كل اللي تحتاجه للبيع أونلاين…</span>
-                            <span class="block max-w-[16ch]">في مكان واحد</span>
-                        </h1>
-                        <p
-                            class="mx-auto mb-10 max-w-[28ch] text-center text-[16px] font-normal leading-[1.85] text-white/80"
-                        >
-                            أنشئ متجرك، اعرض منتجاتك، واستقبل طلباتك ومدفوعاتك بسهولة من خلال إنستاباي.
-                        </p>
-
-                        <div class="mt-10">
-                            <Link
-                                :href="isAuthenticated ? dashboard() : register()"
-                                class="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-4 text-[15px] font-semibold text-[#1f0433] shadow-[0_1px_2px_rgba(0,0,0,0.12),0_6px_20px_-4px_rgba(0,0,0,0.25)] transition hover:bg-white/90 active:scale-[0.98]"
-                            >
-                            <template v-if="isAuthenticated">
-                                <CircleUser class="h-[18px] w-[18px] shrink-0" stroke-width="2" />
-                                حسابي
-                            </template>
-                            <template v-else>
-                                ابدأ الآن
-                                <ArrowLeft class="h-[18px] w-[18px] opacity-95" stroke-width="2.5" />
-                            </template>
-                        </Link>
-                    </div>
-
-                    <div class="mt-10 flex items-center justify-center gap-3" role="list" aria-label="قنوات التواصل">
-                        <a
-                            href="#"
-                            role="listitem"
-                            class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(37,211,102,0.35)] ring-2 ring-[#25D366]/20 transition hover:scale-105 hover:ring-[#25D366]/40 active:scale-95"
-                            aria-label="واتساب"
-                            @click.prevent
-                        >
-                            <svg class="h-[22px] w-[22px] text-[#25D366]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path
-                                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"
-                                />
-                            </svg>
-                        </a>
-                        <a
-                            href="#"
-                            role="listitem"
-                            class="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228dc] text-white shadow-[0_2px_10px_rgba(221,42,123,0.35)] transition hover:scale-105 active:scale-95"
-                            aria-label="إنستغرام"
-                            @click.prevent
-                        >
-                            <Instagram class="h-5 w-5" stroke-width="2" aria-hidden="true" />
-                        </a>
-                        <a
-                            href="#"
-                            role="listitem"
-                            class="flex h-11 w-11 items-center justify-center rounded-full bg-white text-black shadow-md ring-2 ring-[#25F4EE]/35 transition hover:scale-105 active:scale-95"
-                            aria-label="تيك توك"
-                            @click.prevent
-                        >
-                            <svg
-                                class="h-[19px] w-[19px]"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                aria-hidden="true"
-                                    >
-                                        <path
-                                    d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.3-1.86.1-3.72-.47-5.21-1.58-1.56-1.18-2.63-2.95-3.07-4.9-.37-1.61-.35-3.3-.02-4.9.43-2.08 1.68-3.98 3.52-5.22 1.58-1.07 3.51-1.6 5.43-1.53.02 1.62.01 3.24.01 4.86-1.05-.09-2.16.25-2.92 1.02-.76.78-1.01 1.95-.67 2.97.33.92 1.17 1.62 2.13 1.75.75.09 1.52-.07 2.11-.5.68-.5 1.08-1.27 1.09-2.09.05-2.5-.01-5 .02-7.5z"
-                                        />
-                                    </svg>
-                                </a>
-                        <a
-                            href="#"
-                            role="listitem"
-                            class="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-[0_2px_8px_rgba(24,119,242,0.35)] ring-2 ring-[#1877F2]/25 transition hover:scale-105 hover:ring-[#1877F2]/45 active:scale-95"
-                            aria-label="فيسبوك"
-                            @click.prevent
-                        >
-                            <Facebook class="h-[22px] w-[22px] text-[#1877F2]" :stroke-width="2" aria-hidden="true" />
-                        </a>
-                    </div>
-
-                    <div class="mt-8 flex items-center justify-center gap-1">
-                        <Star
-                            v-for="si in 5"
-                            :key="si"
-                            class="h-3.5 w-3.5 fill-[#C8A97E] text-[#C8A97E]"
-                        />
-                        <span class="mr-2 text-[13px] text-white/75">موثوق من بائعين في مصر</span>
-                    </div>
-                    </section>
+                        Dokany.com/yourbrand
+                    </span>
+                    <Link2 class="h-8 w-8 flex-shrink-0 text-purple-900" />
                 </div>
+                <p class="mt-4 text-sm text-gray-500">{{ copied ? 'تم النسخ! 🎉' : 'اللينك بتاعك هيكون فريد وسهل في المشاركة' }}</p>
+            </div>
+        </section>
 
-                <!-- Features -->
-                <section id="features" class="border-t border-[#E6E5E2] bg-[#F8F8F7] px-6 py-16">
-                    <h2 class="mb-2 text-center text-[28px] font-extrabold tracking-[-0.02em] text-[#111111]">
-                        كل ما تحتاجه
-                    </h2>
-                    <p class="mx-auto mb-12 max-w-[26ch] text-center text-[16px] leading-relaxed text-[#6B7280]">
-                        بساطة في الاستخدام. قوة في النتيجة.
-                    </p>
-                    <div class="flex flex-col gap-3">
-                        <div
-                            v-for="(f, i) in features"
-                            :key="f.title"
-                            class="landing-card rounded-[20px] border border-[#E6E5E2] bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-                            :style="{ animationDelay: `${i * 40}ms` }"
-                        >
-                            <div
-                                class="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-[#F3EFE6] text-[#111111]"
-                            >
-                                <component :is="f.icon" class="h-5 w-5" stroke-width="1.75" />
-                            </div>
-                            <h3 class="mb-2 text-[19px] font-semibold tracking-[-0.01em] text-[#111111]">
-                                {{ f.title }}
-                            </h3>
-                            <p class="text-[16px] font-normal leading-relaxed text-[#6B7280]">{{ f.desc }}</p>
-                        </div>
+        <section class="bg-gray-50 py-16">
+            <div class="mx-auto max-w-6xl px-6">
+                <h2 class="mb-12 text-center text-3xl font-bold">ليه تختارنا؟</h2>
+                <div class="grid gap-8 md:grid-cols-3">
+                    <div v-for="(feature, index) in features" :key="index" class="rounded-xl bg-white p-8 shadow-sm transition hover:shadow-md">
+                        <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-purple-100"><component :is="feature.icon" class="h-7 w-7 text-purple-900" /></div>
+                        <h3 class="mb-3 text-xl font-bold">{{ feature.title }}</h3>
+                        <p class="leading-relaxed text-gray-600">{{ feature.description }}</p>
                     </div>
-                </section>
-
-                <!-- How it works -->
-                <section id="how-it-works" class="bg-white px-6 py-16">
-                    <h2 class="mb-2 text-center text-[28px] font-extrabold tracking-[-0.02em] text-[#111111]">كيف يعمل</h2>
-                    <p class="mx-auto mb-14 max-w-[26ch] text-center text-[16px] leading-relaxed text-[#6B7280]">
-                        ثلاث خطوات. بدون تعقيد.
-                    </p>
-                    <div class="relative space-y-0">
-                        <div
-                            class="absolute right-[22px] top-6 bottom-6 w-px bg-gradient-to-b from-[#C8A97E]/28 via-[#C8A97E]/10 to-transparent"
-                            aria-hidden="true"
-                        />
-                        <div v-for="s in steps" :key="s.n" class="relative flex gap-6 pb-12 last:pb-0">
-                            <div
-                                class="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#111111] text-[15px] font-semibold text-white shadow-[0_2px_10px_rgba(17,17,17,0.18)]"
-                            >
-                                {{ s.n }}
-                            </div>
-                            <div class="min-w-0 pt-0.5">
-                                <div class="mb-1 flex items-center gap-2">
-                                    <component :is="s.icon" class="h-4 w-4 text-[#6B7280]" stroke-width="1.75" />
-                                    <h3 class="text-[16px] font-semibold text-[#111111]">{{ s.title }}</h3>
-                                </div>
-                                <p class="text-[16px] leading-relaxed text-[#6B7280]">{{ s.desc }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Pricing -->
-                <section id="pricing" class="bg-white px-6 py-16">
-                    <h2 class="mb-2 text-center text-[28px] font-extrabold tracking-[-0.02em] text-[#111111]">السعر</h2>
-                    <p class="mb-10 text-center text-[16px] text-[#6B7280]">شفاف. بدون مفاجآت.</p>
-
-                    <div
-                        class="rounded-2xl border border-[#E6E5E2] bg-white p-8 shadow-[0_2px_12px_-4px_rgba(17,17,17,0.05)]"
-                    >
-                        <p class="text-center text-[13px] font-medium uppercase tracking-[0.06em] text-[#6B7280]">
-                            شهرياً
-                        </p>
-                        <div class="mt-1 flex items-baseline justify-center gap-1">
-                            <span class="font-inter text-[48px] font-semibold tracking-[-0.03em] text-[#111111]">500</span>
-                            <span class="text-[19px] font-medium text-[#6B7280]">ج.م</span>
-                        </div>
-
-                        <ul class="mt-8 space-y-3 border-t border-[#E6E5E2] pt-8">
-                            <li
-                                v-for="item in [
-                                    'متجر كامل',
-                                    'منتجات غير محدودة',
-                                    'إدارة الطلبات',
-                                    'صفحة دفع',
-                                    'فواتير',
-                                    'دعم واتساب',
-                                ]"
-                                :key="item"
-                                class="flex items-start gap-3 text-[15px] text-[#4B5563]"
-                            >
-                                <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#111111]">
-                                    <Check class="h-2.5 w-2.5 text-white" stroke-width="3" />
-                                </span>
-                                {{ item }}
-                        </li>
-                    </ul>
-
-                        <Link
-                            :href="isAuthenticated ? dashboard() : register()"
-                            class="btn-primary-dark mt-8 flex w-full items-center justify-center gap-2 rounded-xl py-4 text-[15px] font-semibold text-white transition hover:bg-[#222222] active:scale-[0.98]"
-                        >
-                            <template v-if="isAuthenticated">
-                                <CircleUser class="h-[18px] w-[18px] shrink-0" stroke-width="2" />
-                                حسابي
-                            </template>
-                            <template v-else>
-                                اشترك كتاجر
-                                <ArrowLeft class="h-[18px] w-[18px]" stroke-width="2" />
-                            </template>
-                        </Link>
-                    </div>
-                </section>
-
-                <!-- Testimonials slider -->
-                <section class="border-t border-[#E6E5E2] bg-[#F8F8F7] py-16">
-                    <div class="mb-10 px-6 text-center">
-                        <h2 class="mb-2 text-[28px] font-extrabold tracking-[-0.02em] text-[#111111]">
-                            آراء التجار
-                        </h2>
-                        <p class="text-[16px] text-[#6B7280]">قصص من أرض الواقع — اسحب لرؤية المزيد</p>
                 </div>
+            </div>
+        </section>
 
-                    <div
-                        ref="testimonialSliderRef"
-                        class="testimonial-slider flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-visible scroll-smooth px-6 pb-1 [-webkit-overflow-scrolling:touch] [scroll-padding-inline:24px]"
-                        role="region"
-                        aria-roledescription="carousel"
-                        aria-label="آراء التجار"
-                    >
-                        <blockquote
-                            v-for="(t, i) in testimonials"
-                            :key="t.name"
-                            :data-testimonial-index="i"
-                            class="testimonial-card snap-center snap-always shrink-0 rounded-[22px] border border-[#E6E5E2] bg-white p-6 shadow-[0_4px_24px_-4px_rgba(17,17,17,0.05)] ring-1 ring-[#E6E5E2]/80 first:ms-0 last:me-0"
-                            style="width: min(296px, calc(100vw - 4.5rem)); max-width: 100%"
-                        >
-                            <div
-                                class="mb-4 inline-flex rounded-full border border-[#E6E5E2] bg-[#F8F8F7] px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-[#6B7280]"
-                            >
-                                شهادة
-                            </div>
-                            <p class="mb-6 text-[16px] font-normal leading-[1.65] text-[#111111]">
-                                «{{ t.quote }}»
-                            </p>
-                            <footer class="flex items-center gap-3 border-t border-[#E6E5E2] pt-5">
-                                <div
-                                    class="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#F3EFE6] to-[#E8DCC8] text-[15px] font-bold text-[#111111]"
-                                >
-                                    {{ t.name.charAt(0) }}
-                                </div>
-                                <div class="min-w-0">
-                                    <cite class="not-italic text-[15px] font-semibold text-[#111111]">{{ t.name }}</cite>
-                                    <p class="truncate text-[13px] text-[#6B7280]">{{ t.role }}</p>
-                                </div>
-                            </footer>
-                        </blockquote>
+        <section class="bg-white py-16">
+            <div class="mx-auto max-w-4xl px-6">
+                <h2 class="mb-12 text-center text-3xl font-bold">التسعير</h2>
+                <div class="mx-auto max-w-lg rounded-2xl bg-gradient-to-br from-purple-900 to-purple-800 p-10 text-center text-white">
+                    <div class="mb-8"><div class="mb-2 text-6xl font-bold">500</div><div class="text-purple-200">ج.م / شهرياً</div></div>
+                    <div class="mb-8 space-y-4 text-right">
+                        <div v-for="feature in pricingFeatures" :key="feature" class="flex items-center gap-3"><Check class="h-5 w-5 flex-shrink-0 text-purple-300" /><span class="text-purple-50">{{ feature }}</span></div>
                     </div>
-
-                    <div class="mt-8 flex items-center justify-center gap-2 px-6" role="tablist" aria-label="اختيار الشهادة">
-                        <button
-                            v-for="(_, i) in testimonials"
-                            :key="i"
-                            type="button"
-                            role="tab"
-                            class="h-2 rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A97E]/35 focus-visible:ring-offset-2"
-                            :class="
-                                i === activeTestimonialIndex
-                                    ? 'w-7 bg-[#C8A97E]'
-                                    : 'w-2 bg-[#E6E5E2] hover:bg-[#D8D6D1]'
-                            "
-                            :aria-selected="i === activeTestimonialIndex"
-                            :aria-label="`الشهادة ${i + 1}`"
-                            @click="scrollToTestimonial(i)"
-                        />
-                    </div>
-                </section>
-
-                <!-- FAQ -->
-                <section id="faq" class="bg-white px-6 py-16">
-                    <h2 class="mb-2 text-center text-[28px] font-extrabold tracking-[-0.02em] text-[#111111]">
-                        الأسئلة
-                    </h2>
-                    <p class="mb-10 text-center text-[16px] text-[#6B7280]">قبل ما تبدأ</p>
-                    <div class="divide-y divide-[#E6E5E2] overflow-hidden rounded-[20px] border border-[#E6E5E2] bg-[#F8F8F7]">
-                        <div v-for="(item, i) in faqs" :key="i" class="bg-white first:rounded-t-[19px] last:rounded-b-[19px]">
-                            <button
-                                type="button"
-                                class="flex w-full items-center justify-between gap-4 px-5 py-5 text-start text-[15px] font-semibold text-[#111111] transition hover:bg-[#F8F8F7]"
-                                :aria-expanded="openFaq === i"
-                                @click="toggleFaq(i)"
-                            >
-                                {{ item.q }}
-                                <ChevronDown
-                                    class="h-5 w-5 shrink-0 text-[#6B7280] transition-transform duration-300 ease-out"
-                                    :class="{ '-rotate-180': openFaq === i }"
-                                    stroke-width="2"
-                                />
-                            </button>
-                            <div
-                                v-show="openFaq === i"
-                                class="border-t border-[#E6E5E2] px-5 pb-5 pt-0 text-[16px] font-normal leading-relaxed text-[#6B7280]"
-                            >
-                                <p class="pt-4">
-                                    {{ item.a }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Final CTA -->
-                <section class="px-6 pb-6 pt-4">
-                    <div
-                        class="relative overflow-hidden rounded-2xl border border-[#E6E5E2] px-6 py-12 text-center shadow-[0_8px_32px_-14px_rgba(17,17,17,0.08)] [background:linear-gradient(160deg,#FFFFFF_0%,#F8F8F7_52%,#FFFFFF_100%)]"
-                    >
-                        <div
-                            class="pointer-events-none absolute inset-0 opacity-60 [background:radial-gradient(ellipse_90%_55%_at_50%_0%,rgba(200,169,126,0.09),transparent_62%)]"
-                        />
-                        <Smartphone class="relative z-10 mx-auto mb-5 h-9 w-9 text-[#C8A97E]" stroke-width="1.25" />
-                        <h2 class="relative z-10 mb-3 text-[28px] font-extrabold leading-[1.2] tracking-[-0.02em] text-[#111111]">
-                            ابدأ بيع منتجاتك بشكل احترافي اليوم
-                        </h2>
-                        <p class="relative z-10 mb-8 text-[16px] font-normal leading-relaxed text-[#6B7280]">
-                            انضم لآلاف البائعين الذين ينظمون عملهم بدكاني.
-                        </p>
-                        <Link
-                            :href="isAuthenticated ? dashboard() : register()"
-                            class="btn-primary-dark relative z-10 inline-flex w-full items-center justify-center gap-2 rounded-xl py-4 text-[15px] font-semibold text-white transition hover:bg-[#222222] active:scale-[0.98]"
-                        >
-                            <template v-if="isAuthenticated">
-                                <CircleUser class="h-[18px] w-[18px] shrink-0" stroke-width="2" />
-                                حسابي
-                            </template>
-                            <template v-else>
-                                ابدأ الآن
-                                <ArrowLeft class="h-[18px] w-[18px]" stroke-width="2.5" />
-                            </template>
-                        </Link>
-                    </div>
-                </section>
-
-                <!-- Footer -->
-                <footer class="border-t border-[#E6E5E2] px-6 py-10">
-                    <div class="flex flex-col items-center gap-5 text-center">
-                        <span class="text-[15px] font-semibold text-[#111111]">دكاني</span>
-                        <p class="max-w-[260px] text-[12px] leading-relaxed text-[#6B7280]">
-                            منصة للبيع على إنستغرام وواتساب — بواجهة هادئة وواضحة.
-                        </p>
-                        <div class="flex flex-wrap items-center justify-center gap-3 text-[13px]">
-                            <a
-                                href="#faq"
-                                class="font-medium text-[#C8A97E] transition hover:text-[#B89367] hover:underline"
-                                @click.prevent="scrollToId('faq')"
-                            >الأسئلة</a>
-                            <span class="text-[#E6E5E2]">|</span>
-                            <Link
-                                v-if="isAuthenticated"
-                                :href="dashboard()"
-                                class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#E6E5E2] bg-[#F8F8F7] text-[#374151] transition hover:border-[#C8A97E]/55 hover:text-[#111111]"
-                                aria-label="لوحة التحكم"
-                            >
-                                <CircleUser class="h-[18px] w-[18px]" stroke-width="1.75" />
-                            </Link>
-                            <Link
-                                v-else
-                                :href="login()"
-                                class="font-medium text-[#C8A97E] transition hover:text-[#B89367] hover:underline"
-                            >تسجيل الدخول</Link>
-                        </div>
-                        <p class="text-[11px] text-[#9CA3AF]">
-                            © {{ new Date().getFullYear() }} دكاني
-                        </p>
+                    <Link :href="isAuthenticated ? dashboard() : register()" class="block w-full rounded-lg bg-white py-4 font-bold text-purple-900 hover:bg-purple-50">ابدأ الآن</Link>
                 </div>
-                </footer>
-            </main>
-        </div>
+            </div>
+        </section>
+
+        <section class="bg-gray-50 py-16">
+            <div class="mx-auto max-w-6xl px-6">
+                <h2 class="mb-12 text-center text-3xl font-bold">آراء العملاء</h2>
+                <div class="grid gap-6 md:grid-cols-3">
+                    <div v-for="(review, index) in reviews" :key="index" class="rounded-xl bg-white p-6 shadow-sm">
+                        <div class="mb-4 flex gap-1"><Star v-for="i in review.rating" :key="i" class="h-5 w-5 fill-purple-900 text-purple-900" /></div>
+                        <p class="mb-4 leading-relaxed text-gray-600">"{{ review.text }}"</p>
+                        <div><div class="font-bold">{{ review.name }}</div><div class="text-sm text-gray-500">{{ review.role }}</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white py-16">
+            <div class="mx-auto max-w-3xl px-6">
+                <h2 class="mb-12 text-center text-3xl font-bold">الأسئلة الشائعة</h2>
+                <div class="space-y-3">
+                    <div v-for="(faq, index) in faqs" :key="index" class="overflow-hidden rounded-lg border border-gray-200">
+                        <button class="flex w-full items-center justify-between px-6 py-4 text-right hover:bg-gray-50" @click="openFaq = openFaq === index ? null : index">
+                            <span class="font-semibold">{{ faq.question }}</span>
+                            <ChevronDown class="h-5 w-5 text-gray-500 transition-transform" :class="{ 'rotate-180': openFaq === index }" />
+                        </button>
+                        <div v-if="openFaq === index" class="border-t border-gray-200 bg-gray-50 px-6 py-4">
+                            <p class="leading-relaxed text-gray-600">{{ faq.answer }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 py-16 text-white">
+            <div class="mx-auto max-w-4xl px-6 text-center">
+                <h2 class="mb-4 text-4xl font-bold">جاهز تبدأ متجرك النهارده؟</h2>
+                <p class="mb-8 text-xl text-purple-100">انضم لآلاف التجار اللي بدأوا البيع أونلاين بنجاح</p>
+                <Link :href="isAuthenticated ? dashboard() : register()" class="rounded-lg bg-white px-10 py-4 text-lg font-bold text-purple-900 hover:bg-purple-50">
+                    إنشئ متجرك مجاناً
+                </Link>
+            </div>
+        </section>
+
+        <footer class="bg-gray-900 py-12 text-gray-300">
+            <div class="mx-auto max-w-6xl px-6">
+                <div class="mb-8 grid gap-8 md:grid-cols-4">
+                    <div><h3 class="mb-4 font-bold text-white">عن المنصة</h3><p class="text-sm leading-relaxed">أسهل طريقة لإنشاء متجرك الإلكتروني والبدء في البيع أونلاين في دقايق.</p></div>
+                    <div><h3 class="mb-4 font-bold text-white">روابط مهمة</h3><ul class="space-y-2 text-sm"><li><Link :href="register()" class="hover:text-white">إنشئ متجرك</Link></li><li><a href="#" class="hover:text-white">المميزات</a></li><li><a href="#" class="hover:text-white">الأسعار</a></li><li><a href="#" class="hover:text-white">تواصل معانا</a></li></ul></div>
+                    <div><h3 class="mb-4 font-bold text-white">المساعدة</h3><ul class="space-y-2 text-sm"><li><a href="#" class="hover:text-white">مركز الدعم</a></li><li><a href="#" class="hover:text-white">أسئلة شائعة</a></li><li><a href="#" class="hover:text-white">سياسة الاستخدام</a></li></ul></div>
+                    <div><h3 class="mb-4 font-bold text-white">تابعنا</h3><div class="flex gap-3"><a href="#" class="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700"><Facebook class="h-5 w-5" /></a><a href="#" class="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700"><Twitter class="h-5 w-5" /></a><a href="#" class="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-800 hover:bg-gray-700"><Linkedin class="h-5 w-5" /></a></div></div>
+                </div>
+                <div class="border-t border-gray-800 pt-8 text-center text-sm"><p>© {{ new Date().getFullYear() }} جميع الحقوق محفوظة - إنشئ متجرك في دقايق</p></div>
+            </div>
+        </footer>
     </div>
 </template>
 
 <style scoped>
 .dokany-landing {
-    -webkit-tap-highlight-color: transparent;
     font-family:
         'Alexandria',
         'Changa',
@@ -594,64 +241,5 @@ onBeforeUnmount(() => {
         BlinkMacSystemFont,
         'Segoe UI',
         sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-}
-
-.dokany-landing .font-inter {
-    font-family: 'Arimo', 'Alexandria', 'Changa', sans-serif;
-}
-
-.dokany-landing [lang='en'] {
-    font-family: 'Arimo', 'Alexandria', 'Changa', sans-serif;
-}
-
-.dokany-landing :is(h1, h2) {
-    font-weight: 800;
-}
-
-.btn-primary-dark {
-    background-color: #111111;
-    box-shadow:
-        0 1px 2px rgba(17, 17, 17, 0.06),
-        0 6px 16px -4px rgba(17, 17, 17, 0.1);
-}
-
-.landing-card {
-    animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.testimonial-slider {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.testimonial-slider::-webkit-scrollbar {
-    display: none;
-}
-
-.testimonial-card {
-    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.testimonial-card:nth-child(1) {
-    animation-delay: 0ms;
-}
-.testimonial-card:nth-child(2) {
-    animation-delay: 45ms;
-}
-.testimonial-card:nth-child(3) {
-    animation-delay: 90ms;
-}
-
-@keyframes rise {
-    from {
-        opacity: 0;
-        transform: translateY(16px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 </style>

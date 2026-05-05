@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import {
-    ChevronLeft,
-    ChevronRight,
     Facebook,
+    Heart,
     Instagram,
+    Menu,
     Minus,
     Plus,
+    Share2,
     ShoppingBag,
     Trash2,
     Twitter,
     Youtube,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import Swal from 'sweetalert2';
-import 'sweetalert2/dist/sweetalert2.min.css';
 import { Button } from '@/components/ui/button';
 import StorefrontDocumentHead from '@/components/StorefrontDocumentHead.vue';
 import {
@@ -30,7 +29,9 @@ type PublicProduct = {
     name: string;
     description: string;
     price: number;
-    images: { id: number; url: string }[];
+    storefront_category?: string;
+    storefront_category_label?: string;
+    images?: { id: number; url: string }[];
 };
 
 type CartLine = {
@@ -66,6 +67,7 @@ const props = defineProps<{
         social: Partial<Record<SocialKey, string>>;
     };
     products: PublicProduct[];
+    categoryFilters: { value: string; label: string }[];
     productCurrencyEn: string;
     productCurrencyAr: string;
     checkoutPath: string;
@@ -93,11 +95,28 @@ const heroBannerUrls = computed(() => props.seller.hero_banner_urls ?? []);
 
 const hasHeroBanners = computed(() => heroBannerUrls.value.length > 0);
 
-const hasHeroBlock = computed(
-    () => hasHeroBanners.value || hasHeroPrimary.value || hasHeroSecondary.value,
+const activeBannerIndex = ref(0);
+
+const heroTitle = computed(() =>
+    hasHeroPrimary.value ? props.seller.hero_primary!.trim() : props.seller.name,
 );
 
-const activeBannerIndex = ref(0);
+const heroSubtitle = computed(() =>
+    hasHeroSecondary.value
+        ? props.seller.hero_secondary!.trim()
+        : 'تشكيلة مختارة بعناية. جودة وتصميم يليق بك.',
+);
+
+const activeStorefrontCategory = ref<string | null>(null);
+
+const filteredStorefrontProducts = computed(() => {
+    const key = activeStorefrontCategory.value;
+    if (key === null) {
+        return props.products;
+    }
+    return props.products.filter((p) => (p.storefront_category ?? 'new_in') === key);
+});
+
 let bannerRotateTimer: ReturnType<typeof setInterval> | null = null;
 
 function clearBannerTimer(): void {
@@ -191,7 +210,42 @@ const storefrontHeadPreloadImages = computed(() => {
 defineOptions({ layout: false });
 
 const cartOpen = ref(false);
+const menuOpen = ref(false);
 const cartLines = ref<CartLine[]>([]);
+
+function scrollToProducts(): void {
+    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function shareStore(): Promise<void> {
+    const url = window.location.href;
+    const title = props.seller.name;
+    try {
+        if (typeof navigator !== 'undefined' && navigator.share) {
+            await navigator.share({ title, url });
+            return;
+        }
+    } catch {
+        /* dismissed or unavailable */
+    }
+    try {
+        await navigator.clipboard.writeText(url);
+        const [{ default: Swal }] = await Promise.all([
+            import('sweetalert2'),
+            import('sweetalert2/dist/sweetalert2.min.css'),
+        ]);
+        void Swal.fire({
+            toast: true,
+            position: 'top',
+            icon: 'success',
+            title: 'تم نسخ رابط المتجر',
+            timer: 2000,
+            showConfirmButton: false,
+        });
+    } catch {
+        /* ignore */
+    }
+}
 
 const storageKey = computed(
     () => `dokany_store_cart_${props.seller.store_slug ?? 'unknown'}`,
@@ -229,7 +283,7 @@ function addToCart(product: PublicProduct): void {
         productId: product.id,
         name: product.name,
         price: product.price,
-        imageUrl: product.images[0]?.url ?? null,
+        imageUrl: product.images?.[0]?.url ?? null,
         quantity: 1,
     });
 }
@@ -253,7 +307,11 @@ function clearCart(): void {
     cartLines.value = [];
 }
 
-function showPaymentReceiptReceivedSwal(): void {
+async function showPaymentReceiptReceivedSwal(): Promise<void> {
+    const [{ default: Swal }] = await Promise.all([
+        import('sweetalert2'),
+        import('sweetalert2/dist/sweetalert2.min.css'),
+    ]);
     void Swal.fire({
         icon: 'success',
         title: 'تم استلام إيصال الدفع',
@@ -301,7 +359,7 @@ onMounted(() => {
     }
 
     if (page.props.flash?.payment_receipt_received === true) {
-        showPaymentReceiptReceivedSwal();
+        void showPaymentReceiptReceivedSwal();
     }
 });
 
@@ -330,333 +388,421 @@ onUnmounted(() => {
         :preload-image-urls="storefrontHeadPreloadImages"
     />
 
-    <div class="storefront-root min-h-svh antialiased" dir="rtl" lang="ar">
-        <!-- خلفية هادئة خارج لوحة التحكم -->
-        <div
-            class="pointer-events-none fixed inset-0 -z-10 bg-[#f7f5f2]"
-            aria-hidden="true"
-        />
-        <div
-            class="pointer-events-none fixed inset-0 -z-10 opacity-[0.35]"
-            style="
-                background-image:
-                    radial-gradient(ellipse 80% 50% at 50% -20%, rgb(200 169 126 / 0.18), transparent),
-                    radial-gradient(ellipse 60% 40% at 100% 100%, rgb(17 17 17 / 0.04), transparent);
-            "
-            aria-hidden="true"
-        />
-
-        <!-- هيدر: اللوجو فقط على يسار الشاشة (justify-end في RTL) -->
-        <header
-            class="sticky top-0 z-40 border-b border-[#111111]/[0.08] bg-[#faf8f5]/95 px-4 py-3 backdrop-blur-md sm:px-6"
-            dir="rtl"
-        >
-            <div class="mx-auto max-w-3xl">
-                <div class="flex items-center justify-end">
-                <h1 id="storefront-heading" class="sr-only">
-                    {{ seller.name }}
-                </h1>
-                <div
-                    class="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_4px_20px_rgb(17_17_17_/_0.08)] ring-1 ring-[#111111]/[0.06] sm:size-[3.25rem] sm:rounded-[1.05rem]"
-                    aria-hidden="true"
-                >
-                    <img
-                        v-if="seller.logo_url"
-                        :src="seller.logo_url"
-                        alt=""
-                        class="size-full object-cover"
-                        fetchpriority="high"
-                        decoding="async"
-                    />
-                    <span v-else class="text-lg font-semibold text-[#8a6d4a] sm:text-xl">
-                        {{ seller.name.trim().charAt(0) || '·' }}
-                    </span>
-                </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- هيرو: البانر بعرض الشاشة بدون حشو رأسي يفرّغ المساحة؛ النص داخل حاوية القراءة -->
-        <section
-            v-if="hasHeroBlock"
-            class="relative border-b border-[#111111]/[0.06] bg-gradient-to-b from-[#faf8f5] via-[#f7f4ef] to-[#f2ede6]"
-            :class="hasHeroBanners ? 'px-0 py-0' : 'px-4 py-8 sm:px-6 sm:py-10'"
-            aria-labelledby="storefront-heading"
-        >
-            <div
-                class="pointer-events-none absolute inset-0 opacity-35"
-                aria-hidden="true"
-                style="
-                    background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23111111\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-                "
-            />
-            <div
-                v-if="hasHeroBanners"
-                class="group relative w-full max-w-none rounded-none bg-gradient-to-b from-[#ebe6df] via-[#e8e4de] to-[#e0d9d1] shadow-[0_10px_36px_rgb(17_17_17_/_0.1)] ring-1 ring-inset ring-[#111111]/[0.05] sm:rounded-b-2xl"
+    <div class="storefront-root min-h-svh bg-neutral-50 antialiased" dir="rtl" lang="ar">
+        <div class="mx-auto min-h-svh max-w-[390px] bg-white shadow-sm">
+            <header
+                class="sticky top-0 z-50 border-b border-neutral-100 bg-white px-4 py-3"
             >
-                <!-- ملء كامل للإطار (object-cover) — بدون فراغ رمادي؛ قد يُقص جزء من الصورة إذا اختلفت نسبة الأبعاد -->
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div
+                            class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full"
+                            :class="seller.logo_url ? 'bg-white ring-1 ring-neutral-200' : 'bg-black'"
+                        >
+                            <img
+                                v-if="seller.logo_url"
+                                :src="seller.logo_url"
+                                alt=""
+                                class="size-full object-cover"
+                                fetchpriority="high"
+                                decoding="async"
+                            />
+                            <ShoppingBag
+                                v-else
+                                class="size-5 text-white"
+                                stroke-width="1.5"
+                                aria-hidden="true"
+                            />
+                        </div>
+                        <div class="min-w-0 text-start">
+                            <h1
+                                id="storefront-heading"
+                                class="truncate text-sm font-medium tracking-tight text-neutral-900"
+                            >
+                                {{ seller.name }}
+                            </h1>
+                            <p class="text-[10px] tracking-wide text-neutral-500">
+                                متجر إلكتروني
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-1">
+                        <button
+                            type="button"
+                            class="rounded-full p-1.5 text-neutral-700 transition-colors hover:bg-neutral-50"
+                            aria-label="مشاركة رابط المتجر"
+                            @click="shareStore"
+                        >
+                            <Share2 class="size-5" stroke-width="1.5" />
+                        </button>
+                        <button
+                            type="button"
+                            class="relative rounded-full p-1.5 text-neutral-700 transition-colors hover:bg-neutral-50"
+                            aria-label="عرض سلة التسوّق"
+                            @click="cartOpen = true"
+                        >
+                            <ShoppingBag class="size-5" stroke-width="1.5" />
+                            <span
+                                v-if="cartCount > 0"
+                                class="absolute -top-0.5 flex min-h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-black px-1 text-[9px] font-bold tabular-nums text-white"
+                                dir="ltr"
+                            >
+                                {{ cartCount > 99 ? '99+' : cartCount }}
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="rounded-full p-1.5 text-neutral-700 transition-colors hover:bg-neutral-50"
+                            aria-label="قائمة المتجر"
+                            @click="menuOpen = true"
+                        >
+                            <Menu class="size-5" stroke-width="1.5" />
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <section class="relative overflow-hidden" aria-labelledby="storefront-hero-title">
                 <div
-                    class="relative isolate h-[min(42svh,340px)] w-full overflow-hidden sm:h-[min(46svh,420px)] md:h-[min(50svh,500px)]"
+                    class="relative isolate min-h-[220px]"
                     @touchstart.passive="onHeroBannerTouchStart"
                     @touchend.passive="onHeroBannerTouchEnd"
                 >
-                    <Transition
-                        mode="out-in"
-                        enter-active-class="transition-opacity duration-300 ease-out"
-                        leave-active-class="transition-opacity duration-200 ease-in"
-                        enter-from-class="opacity-0"
-                        leave-to-class="opacity-0"
-                    >
-                        <img
-                            v-if="heroBannerUrls[activeBannerIndex]"
-                            :key="`${activeBannerIndex}-${heroBannerUrls[activeBannerIndex]}`"
-                            :src="heroBannerUrls[activeBannerIndex]"
-                            :alt="`بانر ${activeBannerIndex + 1}`"
-                            class="absolute inset-0 z-[1] size-full object-cover object-center"
-                            fetchpriority="high"
-                            decoding="async"
-                        />
-                    </Transition>
-                </div>
-                <div
-                    v-if="heroBannerUrls.length > 1"
-                    class="pointer-events-none absolute inset-0 z-[2] hidden items-center justify-between px-2 opacity-90 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 sm:pointer-events-none sm:flex sm:px-3 sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto"
-                >
-                    <button
-                        type="button"
-                        class="pointer-events-auto flex size-9 items-center justify-center rounded-full bg-[#111111]/45 text-white shadow-sm backdrop-blur-sm transition hover:bg-[#111111]/65 sm:size-10"
-                        aria-label="الشريحة التالية"
-                        @click="stepBanner(1)"
-                    >
-                        <ChevronRight class="size-5" stroke-width="2" />
-                    </button>
-                    <button
-                        type="button"
-                        class="pointer-events-auto flex size-9 items-center justify-center rounded-full bg-[#111111]/45 text-white shadow-sm backdrop-blur-sm transition hover:bg-[#111111]/65 sm:size-10"
-                        aria-label="الشريحة السابقة"
-                        @click="stepBanner(-1)"
-                    >
-                        <ChevronLeft class="size-5" stroke-width="2" />
-                    </button>
-                </div>
-                <div
-                    v-if="heroBannerUrls.length > 1"
-                    class="pointer-events-none absolute inset-x-0 bottom-2 z-[3] flex justify-center sm:bottom-3"
-                    role="tablist"
-                    aria-label="اختيار شريحة البانر"
-                >
-                    <div class="pointer-events-auto flex gap-1.5 rounded-full bg-[#111111]/25 px-2.5 py-1.5 backdrop-blur-sm">
+                    <div v-if="hasHeroBanners" class="absolute inset-0">
+                        <Transition
+                            mode="out-in"
+                            enter-active-class="transition-opacity duration-300 ease-out"
+                            leave-active-class="transition-opacity duration-200 ease-in"
+                            enter-from-class="opacity-0"
+                            leave-to-class="opacity-0"
+                        >
+                            <img
+                                v-if="heroBannerUrls[activeBannerIndex]"
+                                :key="`${activeBannerIndex}-${heroBannerUrls[activeBannerIndex]}`"
+                                :src="heroBannerUrls[activeBannerIndex]"
+                                :alt="`بانر ${activeBannerIndex + 1}`"
+                                class="absolute inset-0 size-full object-cover object-center"
+                                fetchpriority="high"
+                                decoding="async"
+                            />
+                        </Transition>
+                    </div>
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-neutral-900/95 via-neutral-800/95 to-neutral-900/95"
+                        aria-hidden="true"
+                    />
+                    <div class="relative z-[1] px-6 py-12 text-center">
+                        <h2
+                            id="storefront-hero-title"
+                            class="mb-2 text-pretty text-2xl tracking-tight text-white"
+                        >
+                            {{ heroTitle }}
+                        </h2>
+                        <p
+                            class="mx-auto mb-6 max-w-[280px] text-pretty text-sm leading-relaxed text-neutral-300"
+                        >
+                            {{ heroSubtitle }}
+                        </p>
                         <button
-                            v-for="(_, i) in heroBannerUrls"
-                            :key="`dot-${i}`"
                             type="button"
-                            role="tab"
-                            :aria-selected="i === activeBannerIndex"
-                            class="h-1.5 rounded-full transition-all duration-300"
-                            :class="
-                                i === activeBannerIndex
-                                    ? 'w-5 bg-white shadow-sm'
-                                    : 'w-1.5 bg-white/55 hover:bg-white/85'
-                            "
-                            :aria-label="`شريحة ${i + 1}`"
-                            @click="goBanner(i)"
-                        />
+                            class="rounded-full bg-white px-8 py-3 text-sm font-medium text-black transition-all hover:bg-neutral-100 active:scale-95"
+                            @click="scrollToProducts"
+                        >
+                            تسوق الآن
+                        </button>
+                    </div>
+                    <div
+                        v-if="heroBannerUrls.length > 1"
+                        class="relative z-[2] flex justify-center pb-4"
+                        role="tablist"
+                        aria-label="اختيار شريحة البانر"
+                    >
+                        <div
+                            class="flex gap-1.5 rounded-full bg-white/15 px-2.5 py-1.5 backdrop-blur-sm"
+                        >
+                            <button
+                                v-for="(_, i) in heroBannerUrls"
+                                :key="`hero-dot-${i}`"
+                                type="button"
+                                role="tab"
+                                :aria-selected="i === activeBannerIndex"
+                                class="h-1.5 rounded-full transition-all duration-300"
+                                :class="
+                                    i === activeBannerIndex
+                                        ? 'w-5 bg-white shadow-sm'
+                                        : 'w-1.5 bg-white/55 hover:bg-white/85'
+                                "
+                                :aria-label="`شريحة ${i + 1}`"
+                                @click="goBanner(i)"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div
-                v-if="hasHeroPrimary || hasHeroSecondary"
-                class="relative mx-auto max-w-3xl space-y-6 px-4 sm:space-y-8 sm:px-6"
-                :class="hasHeroBanners ? 'mt-6 sm:mt-8' : ''"
-            >
-                <div class="max-w-2xl text-start me-auto sm:max-w-xl" dir="rtl" lang="ar">
-                    <p
-                        v-if="hasHeroPrimary"
-                        class="text-pretty text-xl font-bold leading-snug tracking-tight text-[#111111] sm:text-2xl md:text-3xl sm:leading-[1.25]"
+            <section class="overflow-x-auto px-4 py-6" aria-label="تصنيفات">
+                <div class="flex gap-2">
+                    <button
+                        type="button"
+                        class="whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-all active:scale-95"
+                        :class="
+                            activeStorefrontCategory === null
+                                ? 'border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800'
+                                : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
+                        "
+                        @click="activeStorefrontCategory = null"
                     >
-                        {{ seller.hero_primary }}
-                    </p>
-                    <p
-                        v-if="hasHeroSecondary"
-                        class="text-pretty text-sm leading-relaxed text-[#8a8278]"
-                        :class="hasHeroPrimary ? 'mt-4' : ''"
+                        الكل
+                    </button>
+                    <button
+                        v-for="cat in categoryFilters"
+                        :key="cat.value"
+                        type="button"
+                        class="whitespace-nowrap rounded-full border px-4 py-2 text-sm transition-all active:scale-95"
+                        :class="
+                            activeStorefrontCategory === cat.value
+                                ? 'border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800'
+                                : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
+                        "
+                        @click="
+                            activeStorefrontCategory =
+                                activeStorefrontCategory === cat.value ? null : cat.value
+                        "
                     >
-                        {{ seller.hero_secondary }}
-                    </p>
+                        {{ cat.label }}
+                    </button>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- منتجات: عمودان ثابتان، تصميم تحريري -->
-        <main class="mx-auto max-w-3xl px-3 pb-28 pt-6 sm:px-5 sm:pb-32 sm:pt-8">
-            <section id="products" aria-label="قائمة المنتجات">
-                <div class="mb-5 text-center sm:mb-6">
+            <main class="px-4 pb-8">
+                <section id="products" aria-label="قائمة المنتجات">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-sm font-medium tracking-tight text-neutral-900">
+                            منتجات مميزة
+                        </h3>
+                        <span class="text-xs text-neutral-500 tabular-nums">
+                            <template v-if="activeStorefrontCategory !== null">
+                                {{ filteredStorefrontProducts.length }} من {{ products.length }}
+                            </template>
+                            <template v-else>{{ products.length }} صنف</template>
+                        </span>
+                    </div>
+
                     <p
-                        class="text-[10px] font-medium uppercase tracking-[0.24em] text-[#9c9590] sm:text-[11px]"
+                        v-if="products.length === 0"
+                        class="py-16 text-center text-sm text-neutral-500"
+                    >
+                        لا توجد منتجات في هذا المتجر حالياً.
+                    </p>
+
+                    <p
+                        v-else-if="filteredStorefrontProducts.length === 0"
+                        class="py-16 text-center text-sm text-neutral-500"
+                    >
+                        لا توجد منتجات في هذا الصنف.
+                    </p>
+
+                    <ul v-else class="grid list-none grid-cols-2 gap-4">
+                        <li v-for="(p, idx) in filteredStorefrontProducts" :key="p.id" class="group min-w-0">
+                            <article class="cursor-pointer">
+                                <div
+                                    class="relative mb-3 aspect-[3/4] overflow-hidden rounded-2xl bg-neutral-100"
+                                >
+                                    <img
+                                        v-if="p.images?.[0]?.url"
+                                        :src="p.images?.[0]?.url"
+                                        :alt="p.name"
+                                        class="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        :loading="idx < 2 ? 'eager' : 'lazy'"
+                                        :fetchpriority="idx === 0 ? 'high' : undefined"
+                                        decoding="async"
+                                        sizes="(max-width: 390px) 50vw, 195px"
+                                    />
+                                    <div
+                                        v-else
+                                        class="flex size-full items-center justify-center px-2 text-center text-[10px] text-neutral-400"
+                                    >
+                                        بدون صورة
+                                    </div>
+                                    <span
+                                        class="pointer-events-none absolute top-2 start-2 flex size-8 items-center justify-center rounded-full bg-white/90 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100"
+                                        aria-hidden="true"
+                                    >
+                                        <Heart class="size-4 text-neutral-700" stroke-width="1.5" />
+                                    </span>
+                                </div>
+                                <div class="px-1">
+                                    <h4
+                                        class="mb-1 line-clamp-1 text-sm font-medium text-neutral-900"
+                                        dir="auto"
+                                    >
+                                        {{ p.name }}
+                                    </h4>
+                                    <p
+                                        v-if="p.storefront_category_label"
+                                        class="mb-1 line-clamp-1 text-[10px] text-neutral-500"
+                                    >
+                                        {{ p.storefront_category_label }}
+                                    </p>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span
+                                            class="text-sm font-medium tabular-nums text-neutral-900"
+                                            dir="ltr"
+                                        >
+                                            {{ formatPrice(p.price) }}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-black text-white transition hover:bg-neutral-800 active:scale-95"
+                                            aria-label="إضافة للسلة"
+                                            @click.stop="addToCart(p)"
+                                        >
+                                            <Plus class="size-4" stroke-width="2" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </article>
+                        </li>
+                    </ul>
+                </section>
+            </main>
+
+            <section
+                class="border-t border-neutral-100 px-4 pb-10 pt-6"
+                aria-label="مميزات التسوق"
+            >
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="mb-1 text-lg" aria-hidden="true">🚚</div>
+                        <p class="text-[10px] leading-tight text-neutral-600">
+                            شحن سريع<br />إلى بابك
+                        </p>
+                    </div>
+                    <div>
+                        <div class="mb-1 text-lg" aria-hidden="true">↩️</div>
+                        <p class="text-[10px] leading-tight text-neutral-600">
+                            تواصل سهل<br />مع البائع
+                        </p>
+                    </div>
+                    <div>
+                        <div class="mb-1 text-lg" aria-hidden="true">✓</div>
+                        <p class="text-[10px] leading-tight text-neutral-600">
+                            دفع آمن<br />وموثوق
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <footer class="border-t border-neutral-100 px-4 py-6">
+                <p
+                    class="text-center text-[10px] font-medium uppercase tracking-widest text-neutral-400"
+                    dir="auto"
+                >
+                    {{ seller.name }}
+                </p>
+            </footer>
+        </div>
+
+        <Sheet v-model:open="menuOpen">
+            <SheetContent
+                side="right"
+                class="w-full border-0 bg-white sm:max-w-xs"
+                dir="rtl"
+            >
+                <SheetHeader class="space-y-1 border-b border-neutral-100 pb-4 text-right">
+                    <SheetTitle class="text-lg font-semibold text-neutral-900">
+                        {{ seller.name }}
+                    </SheetTitle>
+                    <SheetDescription class="text-[13px] text-neutral-500">
+                        روابط وخدمات المتجر
+                    </SheetDescription>
+                </SheetHeader>
+                <nav class="mt-6 flex flex-col gap-2 text-right" aria-label="قائمة المتجر">
+                    <button
+                        type="button"
+                        class="rounded-xl px-3 py-3 text-start text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                        @click="
+                            menuOpen = false;
+                            scrollToProducts();
+                        "
                     >
                         المنتجات
-                    </p>
-                    <h2 class="mt-1.5 text-lg font-semibold tracking-tight text-[#111111] sm:text-xl">
-                        ما نقدّمه لك
-                    </h2>
-                </div>
-
-                <p
-                    v-if="products.length === 0"
-                    class="py-20 text-center text-[15px] text-[#6b6560]"
-                >
-                    لا توجد منتجات في هذا المتجر حالياً.
-                </p>
-
-                <ul
-                    v-else
-                    class="grid list-none grid-cols-2 gap-2.5 sm:gap-4"
-                >
-                    <li v-for="(p, idx) in products" :key="p.id" class="group min-w-0">
-                        <article
-                            class="flex h-full min-w-0 flex-col overflow-hidden rounded-xl bg-white shadow-[0_1px_0_rgb(17_17_17_/_0.05),0_4px_14px_rgb(17_17_17_/_0.05)] ring-1 ring-[#111111]/[0.04] transition duration-300 hover:shadow-[0_1px_0_rgb(17_17_17_/_0.07),0_10px_28px_rgb(17_17_17_/_0.08)] hover:ring-[#111111]/[0.06]"
-                        >
-                            <div
-                                class="relative aspect-square overflow-hidden bg-[#e8e4de] sm:aspect-[5/6]"
-                            >
-                                <img
-                                    v-if="p.images[0]"
-                                    :src="p.images[0].url"
-                                    :alt="p.name"
-                                    class="size-full object-cover transition duration-500 ease-out group-hover:scale-[1.03]"
-                                    :loading="idx < 4 ? 'eager' : 'lazy'"
-                                    :fetchpriority="idx === 0 ? 'high' : idx < 4 ? 'low' : undefined"
-                                    decoding="async"
-                                />
-                                <div
-                                    v-else
-                                    class="flex size-full items-center justify-center px-2 text-center text-[10px] leading-snug text-[#9c9590]"
-                                >
-                                    بدون صورة
-                                </div>
-                            </div>
-                            <div
-                                class="flex min-h-0 flex-1 flex-col border-t border-[#111111]/[0.05] px-2.5 py-2.5 sm:px-3 sm:py-3"
-                            >
-                                <h3
-                                    class="line-clamp-2 text-[0.75rem] font-semibold leading-tight text-[#111111] sm:text-[0.8125rem]"
-                                    dir="auto"
-                                >
-                                    {{ p.name }}
-                                </h3>
-                                <p
-                                    v-if="p.description?.trim()"
-                                    class="mt-1 line-clamp-1 text-[10px] leading-snug text-[#8a8278] sm:text-[11px]"
-                                    dir="auto"
-                                >
-                                    {{ p.description }}
-                                </p>
-                                <div
-                                    class="mt-auto flex items-center justify-between gap-1.5 border-t border-[#111111]/[0.05] pt-2 sm:gap-2 sm:pt-2.5"
-                                >
-                                    <p
-                                        class="min-w-0 truncate text-[0.75rem] font-semibold tabular-nums text-[#6b5340] sm:text-[0.8125rem]"
-                                        dir="ltr"
-                                    >
-                                        {{ formatPrice(p.price) }}
-                                    </p>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        class="h-8 shrink-0 gap-1 rounded-md bg-[#111111] px-2 text-[10px] font-medium text-white shadow-none hover:bg-[#2c2c2c] active:scale-[0.98] sm:h-8 sm:px-2.5 sm:text-[11px]"
-                                        @click="addToCart(p)"
-                                    >
-                                        <Plus class="size-3 opacity-90" stroke-width="2.25" />
-                                        إضافة
-                                    </Button>
-                                </div>
-                            </div>
-                        </article>
-                    </li>
-                </ul>
-            </section>
-        </main>
-
-        <footer
-            class="border-t border-[#111111]/[0.06] bg-[#f5f1eb]/95 px-4 py-12 sm:px-6"
-            dir="rtl"
-        >
-            <div
-                v-if="hasSocialLinks"
-                class="flex flex-wrap items-center justify-center gap-3"
-            >
-                <template v-for="item in socialEntries" :key="item.key">
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-xl px-3 py-3 text-start text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                        @click="
+                            menuOpen = false;
+                            shareStore();
+                        "
+                    >
+                        مشاركة المتجر
+                    </button>
                     <a
-                        :href="item.url"
+                        v-if="showWhatsApp"
+                        :href="seller.whatsapp_href!"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="flex size-11 items-center justify-center rounded-full bg-[#111111]/[0.07] text-[#3d3934] transition hover:bg-[#111111]/[0.12] hover:text-[#111111] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111111]/30"
+                        class="rounded-xl px-3 py-3 text-start text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                        @click="menuOpen = false"
                     >
-                        <span class="sr-only">{{ item.label }}</span>
-                        <Instagram
-                            v-if="item.key === 'instagram'"
-                            class="size-[1.15rem] shrink-0"
-                            stroke-width="2"
-                            aria-hidden="true"
-                        />
-                        <Facebook
-                            v-else-if="item.key === 'facebook'"
-                            class="size-[1.15rem] shrink-0"
-                            stroke-width="2"
-                            aria-hidden="true"
-                        />
-                        <Youtube
-                            v-else-if="item.key === 'youtube'"
-                            class="size-[1.15rem] shrink-0"
-                            stroke-width="2"
-                            aria-hidden="true"
-                        />
-                        <Twitter
-                            v-else-if="item.key === 'x'"
-                            class="size-[1.15rem] shrink-0"
-                            stroke-width="2"
-                            aria-hidden="true"
-                        />
-                        <svg
-                            v-else-if="item.key === 'tiktok'"
-                            class="size-[1.1rem] shrink-0"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"
-                            />
-                        </svg>
+                        واتساب
                     </a>
-                </template>
-            </div>
-            <p
-                class="text-center text-[10px] font-medium uppercase tracking-[0.22em] text-[#ada59a] sm:text-[11px] sm:tracking-[0.26em]"
-                :class="hasSocialLinks ? 'mt-9' : ''"
-                dir="auto"
-            >
-                {{ seller.name }}
-            </p>
-        </footer>
-
-        <!-- زر السلة -->
-        <button
-            type="button"
-            class="fixed bottom-6 start-6 z-50 flex size-14 items-center justify-center rounded-full bg-[#111111] text-white shadow-[0_8px_24px_rgb(17_17_17_/_0.35)] transition hover:scale-105 hover:bg-[#1f1f1f] active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#111111]"
-            aria-label="عرض سلة التسوّق"
-            @click="cartOpen = true"
-        >
-            <ShoppingBag class="size-6" stroke-width="2" />
-            <span
-                v-if="cartCount > 0"
-                class="absolute -top-1 -end-1 flex min-h-[1.35rem] min-w-[1.35rem] items-center justify-center rounded-full bg-[#c8a97e] px-1.5 text-[11px] font-bold tabular-nums text-[#111111]"
-                dir="ltr"
-            >
-                {{ cartCount > 99 ? '99+' : cartCount }}
-            </span>
-        </button>
+                    <div v-if="hasSocialLinks" class="mt-4 border-t border-neutral-100 pt-4">
+                        <p class="mb-3 text-[11px] font-medium uppercase tracking-wide text-neutral-400">
+                            السوشيال
+                        </p>
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <template v-for="item in socialEntries" :key="item.key">
+                                <a
+                                    :href="item.url"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="flex size-10 items-center justify-center rounded-full bg-neutral-100 text-neutral-700 transition hover:bg-neutral-200"
+                                >
+                                    <span class="sr-only">{{ item.label }}</span>
+                                    <Instagram
+                                        v-if="item.key === 'instagram'"
+                                        class="size-[1.1rem] shrink-0"
+                                        stroke-width="2"
+                                        aria-hidden="true"
+                                    />
+                                    <Facebook
+                                        v-else-if="item.key === 'facebook'"
+                                        class="size-[1.1rem] shrink-0"
+                                        stroke-width="2"
+                                        aria-hidden="true"
+                                    />
+                                    <Youtube
+                                        v-else-if="item.key === 'youtube'"
+                                        class="size-[1.1rem] shrink-0"
+                                        stroke-width="2"
+                                        aria-hidden="true"
+                                    />
+                                    <Twitter
+                                        v-else-if="item.key === 'x'"
+                                        class="size-[1.1rem] shrink-0"
+                                        stroke-width="2"
+                                        aria-hidden="true"
+                                    />
+                                    <svg
+                                        v-else-if="item.key === 'tiktok'"
+                                        class="size-[1.05rem] shrink-0"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"
+                                        />
+                                    </svg>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </nav>
+            </SheetContent>
+        </Sheet>
 
         <Sheet v-model:open="cartOpen">
             <SheetContent

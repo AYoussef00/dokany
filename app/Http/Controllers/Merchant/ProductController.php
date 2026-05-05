@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Merchant;
 
+use App\Enums\StorefrontProductCategory;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
@@ -11,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,14 +21,39 @@ class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
-        $products = $request->user()
+        $hiddenValues = DB::table('merchant_hidden_categories')
+            ->where('user_id', $request->user()->id)
+            ->pluck('category')
+            ->all();
+
+        $categoryOptions = collect(StorefrontProductCategory::options())
+            ->reject(static fn (array $option): bool => in_array($option['value'], $hiddenValues, true))
+            ->values()
+            ->all();
+
+        $filterCategory = null;
+        if ($request->filled('category')) {
+            $filterCategory = StorefrontProductCategory::tryFrom((string) $request->query('category'));
+            if ($filterCategory !== null && in_array($filterCategory->value, $hiddenValues, true)) {
+                $filterCategory = null;
+            }
+        }
+
+        $query = $request->user()
             ->products()
             ->with('images')
-            ->latest()
-            ->get();
+            ->latest();
+
+        if ($filterCategory !== null) {
+            $query->where('storefront_category', $filterCategory);
+        }
+
+        $products = $query->get();
 
         return Inertia::render('merchant/Products', [
             'products' => $products->map(fn (Product $p) => $this->productPayload($p))->values(),
+            'categoryOptions' => $categoryOptions,
+            'filterCategory' => $filterCategory?->value,
             'productCurrencyAr' => config('dokany.subscription.currency_label'),
             'productCurrencyEn' => config('dokany.subscription.currency_label_en'),
         ]);
@@ -34,10 +61,13 @@ class ProductController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $activeValues = $this->activeCategoryValuesForUser((int) $request->user()->id);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:10000'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+            'storefront_category' => ['required', Rule::enum(StorefrontProductCategory::class), Rule::in($activeValues)],
             'images' => ['required', 'array', 'min:1', 'max:10'],
             'images.*' => ['image', 'max:10240'],
         ]);
@@ -47,6 +77,7 @@ class ProductController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'price' => $validated['price'],
+                'storefront_category' => $validated['storefront_category'],
             ]);
 
             foreach ($request->file('images', []) as $index => $file) {
@@ -65,11 +96,13 @@ class ProductController extends Controller
     public function update(Request $request, Product $product): RedirectResponse
     {
         $this->authorizeSellerProduct($request, $product);
+        $activeValues = $this->activeCategoryValuesForUser((int) $request->user()->id);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string', 'max:10000'],
             'price' => ['required', 'numeric', 'min:0', 'max:99999999.99'],
+            'storefront_category' => ['required', Rule::enum(StorefrontProductCategory::class), Rule::in($activeValues)],
             'remove_image_ids' => ['sometimes', 'array'],
             'remove_image_ids.*' => ['integer'],
             'images' => ['sometimes', 'array'],
@@ -108,6 +141,7 @@ class ProductController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'price' => $validated['price'],
+                'storefront_category' => $validated['storefront_category'],
             ]);
 
             if ($removeIds !== []) {
@@ -155,11 +189,15 @@ class ProductController extends Controller
      */
     private function productPayload(Product $product): array
     {
+        $category = $product->storefront_category ?? StorefrontProductCategory::NewIn;
+
         return [
             'id' => $product->id,
             'name' => $product->name,
             'description' => $product->description,
             'price' => (float) $product->price,
+            'storefront_category' => $category->value,
+            'storefront_category_label' => $category->labelAr(),
             'images' => $product->images->map(fn (ProductImage $img) => [
                 'id' => $img->id,
                 'url' => $img->url(),
@@ -172,5 +210,22 @@ class ProductController extends Controller
         if ($product->user_id !== $request->user()->id) {
             abort(403);
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function activeCategoryValuesForUser(int $userId): array
+    {
+        $hiddenValues = DB::table('merchant_hidden_categories')
+            ->where('user_id', $userId)
+            ->pluck('category')
+            ->all();
+
+        return collect(StorefrontProductCategory::cases())
+            ->reject(static fn (StorefrontProductCategory $c): bool => in_array($c->value, $hiddenValues, true))
+            ->map(static fn (StorefrontProductCategory $c): string => $c->value)
+            ->values()
+            ->all();
     }
 }

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\StorefrontProductCategory;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -49,15 +51,25 @@ class StorefrontController extends Controller
         $prefix = trim((string) config('dokany.storefront_path_prefix', 'shop'), '/');
 
         $products = $seller->products()
-            ->with('images')
+            ->select(['id', 'user_id', 'name', 'description', 'price', 'storefront_category', 'created_at', 'updated_at'])
+            ->with(['images' => static fn ($q) => $q->select(['id', 'product_id', 'path', 'sort_order'])])
             ->latest()
             ->get();
+
+        $hiddenValues = DB::table('merchant_hidden_categories')
+            ->where('user_id', $seller->id)
+            ->pluck('category')
+            ->all();
+
+        $logoPath = $seller->store_logo_path;
 
         return [
             'seller' => [
                 'store_slug' => $seller->store_slug,
                 'name' => $seller->name,
-                'logo_url' => $seller->store_logo_url,
+                'logo_url' => ($logoPath !== null && $logoPath !== '')
+                    ? User::publicStorageUrl($logoPath)
+                    : null,
                 'whatsapp_phone' => $seller->whatsapp_phone,
                 'whatsapp_href' => $this->whatsappHref($seller->whatsapp_phone),
                 'hero_primary' => $seller->storefront_hero_primary,
@@ -70,12 +82,19 @@ class StorefrontController extends Controller
 
                         return str_starts_with($p, 'store-hero-banners/');
                     })
-                    ->map(static fn (string $p) => asset('storage/'.$p))
+                    ->map(static fn (string $p) => User::publicStorageUrl($p))
                     ->values()
                     ->all(),
                 'social' => $this->storefrontSocialLinks($seller),
             ],
-            'products' => $products->map(fn (Product $p) => $this->productPayload($p))->values(),
+            'products' => $products
+                ->filter(static fn (Product $p): bool => ! in_array((string) $p->storefront_category?->value, $hiddenValues, true))
+                ->map(fn (Product $p) => $this->productPayload($p))
+                ->values(),
+            'categoryFilters' => collect(StorefrontProductCategory::options())
+                ->reject(static fn (array $option): bool => in_array($option['value'], $hiddenValues, true))
+                ->values()
+                ->all(),
             'productCurrencyEn' => config('dokany.subscription.currency_label_en'),
             'productCurrencyAr' => config('dokany.subscription.currency_label'),
             'checkoutPath' => '/'.$prefix.'/'.$seller->store_slug.'/checkout',
@@ -93,7 +112,7 @@ class StorefrontController extends Controller
         $bannerSig = is_array($bannerPaths) ? (json_encode($bannerPaths) ?: '') : '';
 
         $parts = [
-            'v1',
+            'v3',
             (string) $seller->id,
             (string) $seller->merchant_subscription_status,
             (string) ($seller->updated_at?->timestamp ?? 0),
@@ -161,14 +180,18 @@ class StorefrontController extends Controller
      */
     private function productPayload(Product $product): array
     {
+        $category = $product->storefront_category ?? StorefrontProductCategory::NewIn;
+
         return [
             'id' => $product->id,
             'name' => $product->name,
             'description' => $product->description,
             'price' => (float) $product->price,
+            'storefront_category' => $category->value,
+            'storefront_category_label' => $category->labelAr(),
             'images' => $product->images->map(fn (ProductImage $img) => [
                 'id' => $img->id,
-                'url' => $img->url(),
+                'url' => User::publicStorageUrl($img->path),
             ])->values()->all(),
         ];
     }

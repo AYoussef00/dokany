@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Models\StorefrontOrder;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,7 +33,9 @@ class OrderPaymentController extends Controller
         return Inertia::render('public/OrderPayment', [
             'seller' => [
                 'name' => $seller->name,
-                'logo_url' => $seller->store_logo_url,
+                'logo_url' => ($seller->store_logo_path !== null && $seller->store_logo_path !== '')
+                    ? User::publicStorageUrl($seller->store_logo_path)
+                    : null,
                 'instapay_wallet' => $seller->instapay_wallet !== null && trim($seller->instapay_wallet) !== ''
                     ? trim($seller->instapay_wallet)
                     : null,

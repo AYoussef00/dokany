@@ -6,6 +6,7 @@ import {
     CreditCard,
     FileText,
     LayoutGrid,
+    Layers,
     Link2,
     LogOut,
     Package,
@@ -71,6 +72,11 @@ const sellerNavGeneralItems = computed<NavItem[]>(() => [
         title: 'المنتجات',
         href: '/merchant/products',
         icon: Package,
+    },
+    {
+        title: 'الأصناف',
+        href: '/merchant/categories',
+        icon: Layers,
     },
     {
         title: 'الطلبات',

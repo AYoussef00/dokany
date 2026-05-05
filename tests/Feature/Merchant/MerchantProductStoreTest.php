@@ -31,6 +31,7 @@ class MerchantProductStoreTest extends TestCase
                 'name' => 'منتج تجريبي',
                 'description' => 'وصف تفصيلي للمنتج المعروض للبيع.',
                 'price' => '149.99',
+                'storefront_category' => 'new_in',
                 'images' => [$img1, $img2],
             ])
             ->assertRedirect(route('merchant.products'));
@@ -39,6 +40,7 @@ class MerchantProductStoreTest extends TestCase
         $this->assertNotNull($product);
         $this->assertSame('منتج تجريبي', $product->name);
         $this->assertSame('149.99', $product->price);
+        $this->assertSame('new_in', $product->storefront_category->value);
         $this->assertCount(2, $product->images);
 
         foreach ($product->images as $image) {
@@ -57,6 +59,7 @@ class MerchantProductStoreTest extends TestCase
                 'name' => 'بدون صور',
                 'description' => 'وصف',
                 'price' => '10',
+                'storefront_category' => 'new_in',
                 'images' => [],
             ])
             ->assertSessionHasErrors('images');
@@ -78,6 +81,7 @@ class MerchantProductStoreTest extends TestCase
                 'name' => 'X',
                 'description' => 'Y',
                 'price' => '1',
+                'storefront_category' => 'new_in',
                 'images' => [$img],
             ])
             ->assertForbidden();

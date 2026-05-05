@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StorefrontProductCategory;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'name', 'description', 'price'])]
+#[Fillable(['user_id', 'name', 'description', 'price', 'storefront_category'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -38,6 +39,7 @@ class Product extends Model
     {
         return [
             'price' => 'decimal:2',
+            'storefront_category' => StorefrontProductCategory::class,
         ];
     }
 }

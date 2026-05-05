@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Merchant\CategoriesController;
 use App\Http\Controllers\Merchant\MerchantInvoiceController;
 use App\Http\Controllers\Merchant\MerchantOrderController;
 use App\Http\Controllers\Merchant\MerchantPaymentController;
@@ -19,6 +20,9 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified', 'merchant.subscription_access', 'seller'])->group(function (): void {
     Route::get('store-settings', [StoreSettingsController::class, 'edit'])->name('merchant.store-settings.edit');
     Route::patch('store-settings', [StoreSettingsController::class, 'update'])->name('merchant.store-settings.update');
+    Route::get('categories', [CategoriesController::class, 'index'])->name('merchant.categories');
+    Route::post('categories', [CategoriesController::class, 'store'])->name('merchant.categories.store');
+    Route::delete('categories/{category}', [CategoriesController::class, 'destroy'])->name('merchant.categories.destroy');
     Route::get('products', [ProductController::class, 'index'])->name('merchant.products');
     Route::post('products', [ProductController::class, 'store'])->name('merchant.products.store');
     Route::patch('products/{product}', [ProductController::class, 'update'])->name('merchant.products.update');

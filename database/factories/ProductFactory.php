@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\StorefrontProductCategory;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,6 +21,7 @@ class ProductFactory extends Factory
             'name' => fake()->words(3, true),
             'description' => fake()->paragraph(),
             'price' => fake()->randomFloat(2, 10, 999),
+            'storefront_category' => fake()->randomElement(StorefrontProductCategory::cases()),
         ];
     }
 }

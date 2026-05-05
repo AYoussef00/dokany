@@ -8,8 +8,9 @@ return [
     /**
      * Seconds to cache the public storefront Inertia payload (catalog JSON).
      * Keys include a revision hash so updates invalidate without waiting for TTL.
+     * Default 0 = always fresh catalog (مناسب للتطوير ومتاجر صغيرة). للإنتاج يمكن رفع القيمة.
      */
-    'storefront_catalog_cache_ttl' => max(0, (int) env('DOKANY_STOREFRONT_CACHE_TTL', 600)),
+    'storefront_catalog_cache_ttl' => max(0, (int) env('DOKANY_STOREFRONT_CACHE_TTL', 0)),
 
     /**
      * Default hero copy on the public storefront (merchants can override in store settings).

@@ -56,6 +56,14 @@ class User extends Authenticatable
 
     public const MERCHANT_SUBSCRIPTION_REJECTED = 'rejected';
 
+    /**
+     * مسار تحت /storage على نفس نطاق الصفحة (يتفادى تعارض APP_URL مع 127.0.0.1).
+     */
+    public static function publicStorageUrl(string $path): string
+    {
+        return '/storage/'.ltrim($path, '/');
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 

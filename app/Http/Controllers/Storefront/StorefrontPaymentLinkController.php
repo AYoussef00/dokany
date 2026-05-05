@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentLink;
 use App\Models\StorefrontOrder;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -25,7 +26,9 @@ class StorefrontPaymentLinkController extends Controller
         return Inertia::render('public/StorefrontPayLink', [
             'seller' => [
                 'name' => $seller->name,
-                'logo_url' => $seller->store_logo_url,
+                'logo_url' => ($seller->store_logo_path !== null && $seller->store_logo_path !== '')
+                    ? User::publicStorageUrl($seller->store_logo_path)
+                    : null,
                 'store_slug' => $seller->store_slug,
             ],
             'link' => [

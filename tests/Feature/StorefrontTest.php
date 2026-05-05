@@ -42,6 +42,7 @@ class StorefrontTest extends TestCase
                 ->where('seller.hero_banner_urls', [])
                 ->has('products', 1)
                 ->where('products.0.name', 'صنف تجريبي')
+                ->has('categoryFilters', 4)
                 ->where('checkoutPath', '/'.$prefix.'/demo-boutique/checkout'));
 
         $this->assertModelExists($product);

@@ -30,14 +30,17 @@
             }
         </style>
 
-        <link rel="icon" type="image/png" href="/Screenshot_1447-11-16_at_4.14.56_PM-removebg-preview.png" sizes="any">
-        <link rel="apple-touch-icon" href="/Screenshot_1447-11-16_at_4.14.56_PM-removebg-preview.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon_io/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon_io/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
+        <link rel="shortcut icon" href="/favicon_io/favicon.ico">
+        <link rel="manifest" href="/favicon_io/site.webmanifest">
 
         @fonts
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>Dokany</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

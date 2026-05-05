@@ -28,6 +28,7 @@ class MerchantProductMutateTest extends TestCase
             'name' => 'أصلي',
             'description' => 'وصف',
             'price' => '10',
+            'storefront_category' => 'new_in',
             'images' => [$img],
         ]);
 
@@ -39,6 +40,7 @@ class MerchantProductMutateTest extends TestCase
                 'name' => 'محدّث',
                 'description' => 'وصف جديد',
                 'price' => '25.50',
+                'storefront_category' => 'bestsellers',
             ])
             ->assertRedirect(route('merchant.products'));
 
@@ -46,6 +48,7 @@ class MerchantProductMutateTest extends TestCase
         $this->assertSame('محدّث', $product->name);
         $this->assertSame('وصف جديد', $product->description);
         $this->assertSame('25.50', $product->price);
+        $this->assertSame('bestsellers', $product->storefront_category->value);
         $this->assertCount(1, $product->images);
     }
 
@@ -62,6 +65,7 @@ class MerchantProductMutateTest extends TestCase
             'name' => 'P',
             'description' => 'D',
             'price' => '1',
+            'storefront_category' => 'new_in',
             'images' => [$img],
         ]);
 
@@ -77,6 +81,7 @@ class MerchantProductMutateTest extends TestCase
                 'name' => 'P',
                 'description' => 'D',
                 'price' => '1',
+                'storefront_category' => 'new_in',
                 'remove_image_ids' => [$imageId],
                 'images' => [$newImg],
             ])
@@ -102,6 +107,7 @@ class MerchantProductMutateTest extends TestCase
             'name' => 'P',
             'description' => 'D',
             'price' => '1',
+            'storefront_category' => 'new_in',
             'images' => [$img],
         ]);
 
@@ -114,6 +120,7 @@ class MerchantProductMutateTest extends TestCase
                 'name' => 'P',
                 'description' => 'D',
                 'price' => '1',
+                'storefront_category' => 'new_in',
                 'remove_image_ids' => [$imageId],
             ])
             ->assertSessionHasErrors('images');
@@ -135,6 +142,7 @@ class MerchantProductMutateTest extends TestCase
             'name' => 'P',
             'description' => 'D',
             'price' => '1',
+            'storefront_category' => 'new_in',
             'images' => [$img],
         ]);
 
@@ -146,6 +154,7 @@ class MerchantProductMutateTest extends TestCase
                 'name' => 'X',
                 'description' => 'Y',
                 'price' => '2',
+                'storefront_category' => 'new_in',
             ])
             ->assertForbidden();
     }
@@ -163,6 +172,7 @@ class MerchantProductMutateTest extends TestCase
             'name' => 'P',
             'description' => 'D',
             'price' => '1',
+            'storefront_category' => 'new_in',
             'images' => [$img],
         ]);
 
@@ -194,6 +204,7 @@ class MerchantProductMutateTest extends TestCase
             'name' => 'P',
             'description' => 'D',
             'price' => '1',
+            'storefront_category' => 'new_in',
             'images' => [$img],
         ]);
 
