@@ -6,9 +6,24 @@ use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderPaymentController;
 use App\Http\Controllers\Storefront\StorefrontPaymentLinkController;
 use App\Http\Controllers\StorefrontController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', function (Request $request) {
+    $response = Inertia::render('Welcome')->toResponse($request);
+
+    if ($request->user() === null) {
+        $response->headers->set('Cache-Control', 'public, max-age=600, stale-while-revalidate=86400');
+        $response->headers->set('Vary', 'Accept-Encoding');
+
+        return $response;
+    }
+
+    $response->headers->set('Cache-Control', 'private, no-store');
+
+    return $response;
+})->name('home');
 
 $storefrontPrefix = trim(config('dokany.storefront_path_prefix', 'shop'), '/');
 $slugPattern = '[a-z0-9]+(?:-[a-z0-9]+)*';
