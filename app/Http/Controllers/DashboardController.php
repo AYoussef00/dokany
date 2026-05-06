@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\SiteVisit;
 use App\Models\StorefrontOrder;
 use App\Models\User;
 use Carbon\Carbon;
@@ -50,6 +51,22 @@ class DashboardController extends Controller
                     ->whereHas('user', fn ($q) => $q->where('role', User::ROLE_SELLER))
                     ->count(),
                 'total_storefront_orders' => StorefrontOrder::query()->count('*'),
+                'visitors_today' => SiteVisit::query()
+                    ->where('visited_at', '>=', now()->startOfDay())
+                    ->distinct()
+                    ->count('session_hash'),
+                'visitors_total' => SiteVisit::query()
+                    ->distinct()
+                    ->count('session_hash'),
+                'top_countries_30d' => SiteVisit::query()
+                    ->selectRaw('COALESCE(country_name, \'Unknown\') as country, COUNT(DISTINCT session_hash) as visitors', [])
+                    ->where('visited_at', '>=', now()->subDays(30))
+                    ->groupBy('country')
+                    ->orderByDesc('visitors')
+                    ->limit(5)
+                    ->get()
+                    ->map(fn ($r) => ['country' => $r->country, 'visitors' => (int) $r->visitors])
+                    ->all(),
             ];
         }
 

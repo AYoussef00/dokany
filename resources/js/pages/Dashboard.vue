@@ -12,6 +12,8 @@ import {
     ShoppingCart,
     Store,
     TrendingUp,
+    Users,
+    Globe,
     Wallet,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -30,6 +32,9 @@ type DashboardStats = {
     currency_en: string;
     active_merchants_count: number;
     pending_requests_count: number;
+    visitors_today: number;
+    visitors_total: number;
+    top_countries_30d: { country: string; visitors: number }[];
 };
 
 type OrderStatusSlice = {
@@ -257,6 +262,50 @@ onUnmounted(() => {
             aria-live="polite"
             aria-atomic="true"
         >
+                <div class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-medium text-muted-foreground">زوار اليوم</span>
+                        <Users class="size-5 shrink-0 text-primary" stroke-width="1.75" />
+                    </div>
+                    <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
+                        {{ formatEnInteger(dashboardStats.visitors_today) }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة (حسب Session) خلال آخر 24 ساعة</p>
+                </div>
+
+                <div class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-medium text-muted-foreground">إجمالي الزوار</span>
+                        <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
+                    </div>
+                    <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
+                        {{ formatEnInteger(dashboardStats.visitors_total) }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة منذ بداية التتبع</p>
+                </div>
+
+                <div class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-medium text-muted-foreground">أعلى الدول (30 يوم)</span>
+                        <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
+                    </div>
+                    <div class="mt-3 space-y-2 text-sm">
+                        <div
+                            v-for="row in dashboardStats.top_countries_30d"
+                            :key="row.country"
+                            class="flex items-center justify-between gap-3"
+                        >
+                            <span class="truncate text-foreground">{{ row.country }}</span>
+                            <span class="shrink-0 font-semibold tabular-nums text-foreground" dir="ltr" lang="en">
+                                {{ formatEnInteger(row.visitors) }}
+                            </span>
+                        </div>
+                        <p v-if="dashboardStats.top_countries_30d.length === 0" class="text-xs text-muted-foreground">
+                            لا توجد بيانات بعد.
+                        </p>
+                    </div>
+                </div>
+
             <div
                 class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border"
             >

@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'geoip' => [
+        // Endpoint must include "{ip}" placeholder.
+        'endpoint' => env('GEOIP_ENDPOINT', 'https://ipapi.co/{ip}/json/'),
+        'timeout_seconds' => (int) env('GEOIP_TIMEOUT_SECONDS', 2),
+    ],
+
 ];
