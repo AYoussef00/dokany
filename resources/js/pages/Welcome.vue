@@ -613,7 +613,7 @@ onMounted(() => {
         </footer>
 
         <a
-            href="https://wa.me/966535815072"
+            href="https://wa.me/966597150026"
             target="_blank"
             rel="noopener noreferrer"
             class="fixed bottom-5 right-5 z-50 inline-flex size-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-[#25D366]/25"
