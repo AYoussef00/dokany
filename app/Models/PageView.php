@@ -17,6 +17,7 @@ class PageView extends Model
         'user_id',
         'session_hash',
         'path',
+        'component',
         'duration_seconds',
         'referrer',
         'user_agent',

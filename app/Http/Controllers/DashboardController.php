@@ -69,23 +69,30 @@ class DashboardController extends Controller
                     ->map(fn ($r) => ['country' => $r->country, 'visitors' => (int) $r->visitors])
                     ->all(),
                 'top_pages_30d' => PageView::query()
-                    ->selectRaw('path, COUNT(*) as views, AVG(duration_seconds) as avg_seconds', [])
+                    ->selectRaw('COALESCE(component, path) as route, path, component, COUNT(*) as views, AVG(duration_seconds) as avg_seconds', [])
                     ->where('started_at', '>=', now()->subDays(30))
+                    ->where('path', 'not like', '/dashboard%')
+                    ->where('path', 'not like', '/merchant%')
+                    ->where('path', 'not like', '/settings%')
                     ->groupBy('path')
                     ->orderByDesc('views')
                     ->limit(7)
                     ->get()
                     ->map(fn ($r) => [
                         'path' => (string) $r->path,
+                        'route' => (string) ($r->route ?? $r->path),
                         'views' => (int) $r->views,
                         'avg_seconds' => (int) round((float) $r->avg_seconds),
                     ])
                     ->all(),
                 'recent_journeys' => PageView::query()
                     ->where('started_at', '>=', now()->subDays(7))
+                    ->where('path', 'not like', '/dashboard%')
+                    ->where('path', 'not like', '/merchant%')
+                    ->where('path', 'not like', '/settings%')
                     ->orderByDesc('started_at')
                     ->limit(200)
-                    ->get(['session_hash', 'user_id', 'path', 'duration_seconds', 'started_at'])
+                    ->get(['session_hash', 'user_id', 'path', 'component', 'duration_seconds', 'started_at'])
                     ->groupBy('session_hash')
                     ->take(15)
                     ->map(function ($rows, $sessionHash) {
@@ -97,6 +104,7 @@ class DashboardController extends Controller
                             'total_seconds' => $total,
                             'pages' => $sorted->map(fn ($x) => [
                                 'path' => (string) $x->path,
+                                'route' => (string) ($x->component ?: $x->path),
                                 'seconds' => (int) $x->duration_seconds,
                             ])->all(),
                         ];

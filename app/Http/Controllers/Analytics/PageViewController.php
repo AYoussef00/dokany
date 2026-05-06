@@ -15,6 +15,7 @@ class PageViewController extends Controller
     {
         $data = $request->validate([
             'path' => ['required', 'string', 'max:512'],
+            'component' => ['nullable', 'string', 'max:255'],
             'started_at' => ['required', 'date'],
             'duration_seconds' => ['required', 'integer', 'min:0', 'max:86400'],
             'referrer' => ['nullable', 'string', 'max:512'],
@@ -31,11 +32,21 @@ class PageViewController extends Controller
             return response()->json(['ok' => true]);
         }
 
+        $path = '/'.ltrim((string) $data['path'], '/');
+
+        // Never record admin/dashboard sections in public analytics.
+        if (preg_match('#^/(dashboard|merchant|settings)(/|$)#', $path) === 1) {
+            return response()->json(['ok' => true]);
+        }
+
         PageView::query()->create([
             'started_at' => $data['started_at'],
             'user_id' => $request->user()?->id,
             'session_hash' => hash('sha256', $sessionId),
-            'path' => '/'.ltrim((string) $data['path'], '/'),
+            'path' => $path,
+            'component' => isset($data['component']) && is_string($data['component']) && $data['component'] !== ''
+                ? substr($data['component'], 0, 255)
+                : null,
             'duration_seconds' => $duration,
             'referrer' => $data['referrer'] ?? null,
             'user_agent' => substr((string) $request->userAgent(), 0, 512) ?: null,

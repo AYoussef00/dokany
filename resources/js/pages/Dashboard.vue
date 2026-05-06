@@ -34,12 +34,12 @@ type DashboardStats = {
     visitors_today: number;
     visitors_total: number;
     top_countries_30d: { country: string; visitors: number }[];
-    top_pages_30d: { path: string; views: number; avg_seconds: number }[];
+    top_pages_30d: { path: string; route: string; views: number; avg_seconds: number }[];
     recent_journeys: {
         session: string;
         user_id: number | null;
         total_seconds: number;
-        pages: { path: string; seconds: number }[];
+        pages: { path: string; route: string; seconds: number }[];
     }[];
 };
 
@@ -416,7 +416,10 @@ onUnmounted(() => {
                     >
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-medium text-foreground" dir="ltr" lang="en">{{ row.path }}</p>
+                                <p class="truncate text-sm font-medium text-foreground" dir="ltr" lang="en">{{ row.route }}</p>
+                                <p class="mt-0.5 truncate text-[11px] text-muted-foreground" dir="ltr" lang="en">
+                                    {{ row.path }}
+                                </p>
                                 <p class="mt-0.5 text-xs text-muted-foreground">
                                     متوسط: <span class="font-medium text-foreground">{{ formatDuration(row.avg_seconds) }}</span>
                                 </p>
@@ -472,7 +475,7 @@ onUnmounted(() => {
                                 class="flex items-center justify-between gap-3 rounded-md bg-background/70 px-3 py-2"
                             >
                                 <p class="min-w-0 truncate text-xs font-medium text-foreground" dir="ltr" lang="en">
-                                    {{ idx + 1 }}. {{ p.path }}
+                                    {{ idx + 1 }}. {{ p.route }}
                                 </p>
                                 <p class="shrink-0 text-xs font-semibold tabular-nums text-foreground" dir="ltr" lang="en">
                                     {{ formatDuration(p.seconds) }}
