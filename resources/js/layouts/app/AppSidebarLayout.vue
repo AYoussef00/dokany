@@ -18,17 +18,25 @@ withDefaults(defineProps<Props>(), {
 
 const page = usePage<{ auth: { user: { role?: string } | null } }>();
 
-const isMerchantPro = computed(() => page.props.auth.user?.role === 'seller');
+const isSeller = computed(() => page.props.auth.user?.role === 'seller');
+const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
+const isRtlDashboard = computed(() => isSeller.value || isAdmin.value);
+const sidebarSide = computed<'left' | 'right'>(() => (isRtlDashboard.value ? 'right' : 'left'));
 </script>
 
 <template>
-    <AppShell variant="sidebar" :provider-class="isMerchantPro ? 'merchant-pro-shell' : undefined">
+    <AppShell
+        variant="sidebar"
+        :provider-class="isSeller ? 'merchant-pro-shell' : undefined"
+        :dir="isRtlDashboard ? 'rtl' : undefined"
+        :lang="isRtlDashboard ? 'ar' : undefined"
+    >
         <AppSidebar />
         <AppContent
             variant="sidebar"
             class="overflow-x-hidden"
-            :class="isMerchantPro ? 'merchant-pro-inset' : undefined"
-            :inset-peer-side="isMerchantPro ? 'right' : 'left'"
+            :class="isSeller ? 'merchant-pro-inset' : undefined"
+            :inset-peer-side="sidebarSide"
         >
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
             <slot />

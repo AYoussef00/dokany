@@ -85,7 +85,7 @@ const pageTitle = computed(() => {
     if (isSeller.value) {
         return 'لوحة التحكم';
     }
-    return 'Dashboard';
+    return 'لوحة التحكم';
 });
 
 const { toggleSidebar } = useSidebar();

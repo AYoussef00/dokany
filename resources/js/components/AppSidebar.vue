@@ -47,6 +47,7 @@ const { setOpenMobile } = useSidebar();
 
 const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
 const isSeller = computed(() => page.props.auth.user?.role === 'seller');
+const isRtlDashboard = computed(() => isSeller.value || isAdmin.value);
 
 const sellerUser = computed(() => (isSeller.value ? page.props.auth.user : null));
 
@@ -54,12 +55,12 @@ const sellerPendingOrders = computed(() => page.props.sellerNavBadges?.pending_o
 
 const navGroupLabel = computed(() => {
     if (isAdmin.value) {
-        return 'Platform';
+        return 'المنصة';
     }
     if (isSeller.value) {
         return 'المتجر';
     }
-    return 'Platform';
+    return 'المنصة';
 });
 
 const sellerNavGeneralItems = computed<NavItem[]>(() => [
@@ -114,22 +115,22 @@ const mainNavItems = computed<NavItem[]>(() => {
     if (isAdmin.value) {
         return [
             {
-                title: 'Dashboard',
+                title: 'لوحة التحكم',
                 href: dashboard(),
                 icon: LayoutGrid,
             },
             {
-                title: 'Requests',
+                title: 'طلبات الاشتراك',
                 href: '/admin/requests',
                 icon: ClipboardList,
             },
             {
-                title: 'Sellers',
+                title: 'التجّار',
                 href: '/admin/sellers',
                 icon: Store,
             },
             {
-                title: 'Settings',
+                title: 'الإعدادات',
                 href: '/admin/settings',
                 icon: Settings,
             },
@@ -161,8 +162,8 @@ function onSellerLogoutClick(): void {
 
 <template>
     <Sidebar
-        :side="isSeller ? 'right' : 'left'"
-        :content-dir="isSeller ? 'rtl' : undefined"
+        :side="isRtlDashboard ? 'right' : 'left'"
+        :content-dir="isRtlDashboard ? 'rtl' : undefined"
         collapsible="icon"
         variant="inset"
     >

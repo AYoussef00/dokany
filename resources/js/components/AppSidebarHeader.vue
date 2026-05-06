@@ -20,6 +20,8 @@ withDefaults(
 const page = usePage<{ auth: { user: { name?: string; role?: string } | null } }>();
 
 const isSeller = computed(() => page.props.auth.user?.role === 'seller');
+const isAdmin = computed(() => page.props.auth.user?.role === 'admin');
+const isRtlDashboard = computed(() => isSeller.value || isAdmin.value);
 
 const firstName = computed(() => {
     const raw = page.props.auth.user?.name?.trim() ?? '';
@@ -43,17 +45,17 @@ function cycleTheme(): void {
 <template>
     <header
         class="flex min-h-14 shrink-0 flex-wrap items-center gap-3 border-b border-sidebar-border/40 bg-background/80 px-4 py-3 backdrop-blur-md transition-[width,height] ease-linear md:min-h-16 md:px-6 dark:border-sidebar-border/30"
-        :dir="isSeller ? 'rtl' : undefined"
-        :lang="isSeller ? 'ar' : undefined"
+        :dir="isRtlDashboard ? 'rtl' : undefined"
+        :lang="isRtlDashboard ? 'ar' : undefined"
     >
         <div class="flex min-w-0 flex-1 items-center gap-3">
             <SidebarTrigger class="-ms-1 shrink-0 text-foreground/80" />
             <div class="min-w-0 flex-1 text-start">
-                <p
-                    v-if="isSeller"
-                    class="text-base font-bold tracking-tight text-foreground md:text-lg"
-                >
+                <p v-if="isSeller" class="text-base font-bold tracking-tight text-foreground md:text-lg">
                     مرحباً، {{ firstName || 'تاجر' }}!
+                </p>
+                <p v-else-if="isAdmin" class="text-base font-bold tracking-tight text-foreground md:text-lg">
+                    لوحة التحكم
                 </p>
                 <Breadcrumbs
                     v-if="breadcrumbs.length > 0"
