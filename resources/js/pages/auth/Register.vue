@@ -5,7 +5,7 @@ import { computed, ref } from 'vue';
 import { home, login } from '@/routes';
 import { store } from '@/routes/register';
 
-defineOptions({ layout: null });
+defineOptions({ layout: null as any });
 
 const step = ref(1);
 const totalSteps = 3;
@@ -105,84 +105,94 @@ function submitRegistration(): void {
     <div
         dir="rtl"
         lang="ar"
-        class="dokany-landing min-h-screen bg-[#1f0433] text-white antialiased selection:bg-[#C8A97E]/35"
+        class="min-h-screen bg-white text-slate-900 antialiased selection:bg-indigo-500/15"
     >
-        <div
-            class="relative z-10 mx-auto min-h-screen max-w-[430px] bg-[#1f0433] shadow-[0_4px_40px_-12px_rgba(0,0,0,0.45)] sm:my-8 sm:min-h-[calc(100vh-4rem)] sm:rounded-2xl sm:ring-1 sm:ring-white/10"
-        >
-            <header
-                class="border-b border-white/10 bg-[#1f0433]/90 px-6 py-4 backdrop-blur-xl backdrop-saturate-150 sm:rounded-t-2xl"
-            >
-                <div class="flex items-center justify-between gap-3">
-                    <Link
-                        v-if="step > 1"
-                        href="#"
-                        class="flex items-center gap-1 text-[14px] font-semibold text-white/70 transition hover:text-white"
-                        @click.prevent="prevStep"
-                    >
-                        <ArrowLeft class="h-4 w-4" stroke-width="2" />
-                        رجوع
-                    </Link>
-                    <Link
-                        v-else
-                        :href="home()"
-                        class="flex items-center gap-1 text-[14px] font-semibold text-[#C8A97E] transition hover:text-[#B89367]"
-                    >
-                        <ArrowLeft class="h-4 w-4" stroke-width="2" />
-                        الرئيسية
-                    </Link>
+        <main class="relative min-h-screen">
+            <div
+                class="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_0%,rgba(79,70,229,0.14),transparent_60%),linear-gradient(180deg,#ffffff_0%,#f8fafc_55%,#ffffff_100%)]"
+            />
 
-                    <span class="text-[16px] font-bold tracking-[-0.02em] text-white">دكاني</span>
+            <!-- Minimal header (matches login) -->
+            <header class="relative z-10 mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+                <Link
+                    v-if="step > 1"
+                    href="#"
+                    class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                    @click.prevent="prevStep"
+                >
+                    <ArrowLeft class="h-4 w-4" stroke-width="2" />
+                    رجوع
+                </Link>
+                <Link
+                    v-else
+                    :href="home()"
+                    class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                    <ArrowLeft class="h-4 w-4" stroke-width="2" />
+                    الرئيسية
+                </Link>
 
-                    <Link
-                        :href="login()"
-                        class="text-[14px] font-semibold text-white/70 transition hover:text-white"
-                    >
-                        دخول
-                    </Link>
-                </div>
-
-                <div class="mt-5 flex gap-1.5">
-                    <div
-                        v-for="n in totalSteps"
-                        :key="n"
-                        class="h-1 flex-1 rounded-full transition-colors duration-300"
-                        :class="n <= step ? 'bg-[#C8A97E]' : 'bg-white/15'"
-                    />
-                </div>
-                <p class="mt-2 text-center text-[12px] text-white/55">الخطوة {{ step }} من {{ totalSteps }}</p>
+                <Link
+                    :href="home()"
+                    dir="ltr"
+                    class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-slate-900 hover:bg-slate-100"
+                    aria-label="Dokany"
+                >
+                    <span class="text-base font-black tracking-tight">Dokany</span>
+                </Link>
             </header>
 
-            <main class="px-6 pb-12 pt-8">
-                <form class="space-y-8" @submit.prevent="step < 3 ? nextStep() : submitRegistration()">
-                    <!-- Step 1 -->
-                    <div v-show="step === 1" class="space-y-6">
-                        <div class="text-center">
-                            <div
-                                class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#C8A97E]"
-                            >
-                                <Store class="h-6 w-6" stroke-width="1.5" />
+            <div class="relative mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl items-center justify-center px-6 py-6">
+                <div class="w-full max-w-md">
+                    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5 sm:px-8">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h1 class="text-2xl font-black tracking-tight text-slate-900">إنشاء حساب</h1>
+                                    <p class="mt-1 text-sm font-semibold text-slate-600">الخطوة {{ step }} من {{ totalSteps }}</p>
+                                </div>
+                                <div class="inline-flex size-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
+                                    <Store v-if="step === 1" class="h-6 w-6" stroke-width="2" />
+                                    <UserCircle2 v-else-if="step === 2" class="h-6 w-6" stroke-width="2" />
+                                    <Lock v-else class="h-6 w-6" stroke-width="2" />
+                                </div>
                             </div>
-                            <h1 class="text-[26px] font-bold leading-[1.2] tracking-[-0.02em] text-white">ابدأ بإنشاء متجرك</h1>
-                            <p class="mt-2 text-[15px] text-white/65">اسم واضح ولوجو يعكس علامتك.</p>
+
+                            <div class="mt-5 flex gap-1.5">
+                                <div
+                                    v-for="n in totalSteps"
+                                    :key="n"
+                                    class="h-1 flex-1 rounded-full transition-colors duration-300"
+                                    :class="n <= step ? 'bg-primary' : 'bg-slate-200'"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="px-6 py-6 sm:px-8">
+                            <form class="space-y-5" @submit.prevent="step < 3 ? nextStep() : submitRegistration()">
+                    <!-- Step 1 -->
+                    <div v-show="step === 1" class="space-y-4">
+                        <div class="text-center">
+                            <h2 class="text-xl font-black tracking-tight text-slate-900">ابدأ بإنشاء متجرك</h2>
+                            <p class="mt-1 text-sm font-semibold text-slate-600">اسم واضح ولوجو يعكس علامتك.</p>
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold text-white" for="store_name">اسم المتجر</label>
+                            <label class="block text-sm font-black text-slate-900" for="store_name">اسم المتجر</label>
                             <input
                                 id="store_name"
                                 v-model="form.name"
                     type="text"
                     name="name"
                                 autocomplete="organization"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px]"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                                 placeholder="مثال: دكاني للأزياء"
                             />
-                            <p v-if="form.errors.name" class="text-[13px] text-red-400">{{ form.errors.name }}</p>
+                            <p v-if="form.errors.name" class="text-[13px] font-semibold text-red-600">{{ form.errors.name }}</p>
                         </div>
 
                         <div class="space-y-2">
-                            <span class="block text-[14px] font-semibold text-white">لوجو المتجر</span>
+                            <span class="block text-sm font-black text-slate-900">لوجو المتجر (اختياري)</span>
                             <input
                                 ref="logoInputRef"
                                 type="file"
@@ -193,74 +203,71 @@ function submitRegistration(): void {
                             />
                             <button
                                 type="button"
-                                class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/25 bg-white/5 py-10 transition hover:border-[#C8A97E]/60 hover:bg-white/10"
+                                class="flex w-full items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-8 transition hover:bg-slate-100"
                                 @click="logoInputRef?.click()"
                             >
                                 <template v-if="logoPreview">
                                     <img
                                         :src="logoPreview"
                                         alt=""
-                                        class="h-16 w-16 rounded-xl object-cover ring-1 ring-white/20"
+                                        class="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-200"
                                     />
-                                    <span class="text-[14px] font-medium text-white/70">تغيير الصورة</span>
+                                    <span class="text-sm font-semibold text-slate-700">تغيير الصورة</span>
                                 </template>
                                 <template v-else>
-                                    <Upload class="h-5 w-5 text-[#C8A97E]" stroke-width="1.75" />
-                                    <span class="text-[15px] font-medium text-white/80">رفع لوجو (اختياري)</span>
+                                    <span class="inline-flex size-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                                        <Upload class="h-5 w-5" stroke-width="2" />
+                                    </span>
+                                    <span class="text-sm font-semibold text-slate-700">رفع لوجو</span>
                                 </template>
                             </button>
-                            <p v-if="form.errors.store_logo" class="text-[13px] text-red-400">{{ form.errors.store_logo }}</p>
+                            <p v-if="form.errors.store_logo" class="text-[13px] font-semibold text-red-600">{{ form.errors.store_logo }}</p>
                         </div>
                     </div>
 
                     <!-- Step 2 -->
-                    <div v-show="step === 2" class="space-y-5">
+                    <div v-show="step === 2" class="space-y-4">
                         <div class="text-center">
-                            <div
-                                class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#C8A97E]"
-                            >
-                                <UserCircle2 class="h-6 w-6" stroke-width="1.5" />
-                            </div>
-                            <h1 class="text-[26px] font-bold leading-[1.2] tracking-[-0.02em] text-white">معلومات التواصل</h1>
-                            <p class="mt-2 text-[15px] text-white/65">نربط الدفع والعملاء بمتجرك.</p>
+                            <h2 class="text-xl font-black tracking-tight text-slate-900">معلومات التواصل</h2>
+                            <p class="mt-1 text-sm font-semibold text-slate-600">نربط الدفع والعملاء بمتجرك.</p>
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="instapay">رقم InstaPay</label>
+                            <label class="block text-sm font-black text-slate-900" for="instapay">رقم InstaPay</label>
                             <input
                                 id="instapay"
                                 v-model="form.instapay_wallet"
                                 type="text"
                                 name="instapay_wallet"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px] font-inter"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                                 placeholder="المحفظة أو الرقم المسجل"
                                 dir="ltr"
                             />
-                            <p v-if="form.errors.instapay_wallet" class="text-[13px] text-red-400">
+                            <p v-if="form.errors.instapay_wallet" class="text-[13px] font-semibold text-red-600">
                                 {{ form.errors.instapay_wallet }}
                             </p>
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="whatsapp">رقم واتساب</label>
+                            <label class="block text-sm font-black text-slate-900" for="whatsapp">رقم واتساب</label>
                             <input
                                 id="whatsapp"
                                 v-model="form.whatsapp_phone"
                                 type="text"
                                 name="whatsapp_phone"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px] font-inter"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                                 placeholder="+20 ..."
                                 dir="ltr"
                             />
-                            <p v-if="form.errors.whatsapp_phone" class="text-[13px] text-red-400">
+                            <p v-if="form.errors.whatsapp_phone" class="text-[13px] font-semibold text-red-600">
                                 {{ form.errors.whatsapp_phone }}
                             </p>
             </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="email">
+                            <label class="block text-sm font-black text-slate-900" for="email">
                                 <span class="inline-flex items-center gap-1.5">
-                                    <Mail class="h-3.5 w-3.5 text-white/50" stroke-width="2" />
+                                    <Mail class="h-4 w-4 text-indigo-600" stroke-width="2" />
                                     الإيميل
                                 </span>
                             </label>
@@ -270,70 +277,65 @@ function submitRegistration(): void {
                     type="email"
                                 name="email"
                     autocomplete="email"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px] font-inter"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                                 placeholder="you@example.com"
                                 dir="ltr"
                             />
-                            <p v-if="form.errors.email" class="text-[13px] text-red-400">{{ form.errors.email }}</p>
+                            <p v-if="form.errors.email" class="text-[13px] font-semibold text-red-600">{{ form.errors.email }}</p>
                         </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="phone">الهاتف</label>
+                            <label class="block text-sm font-black text-slate-900" for="phone">الهاتف</label>
                             <input
                                 id="phone"
                                 v-model="form.phone"
                                 type="text"
                                 name="phone"
                                 autocomplete="tel"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px] font-inter"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                                 placeholder="+20 ..."
                                 dir="ltr"
                             />
-                            <p v-if="form.errors.phone" class="text-[13px] text-red-400">{{ form.errors.phone }}</p>
+                            <p v-if="form.errors.phone" class="text-[13px] font-semibold text-red-600">{{ form.errors.phone }}</p>
                         </div>
                     </div>
 
                     <!-- Step 3 -->
-                    <div v-show="step === 3" class="space-y-5">
+                    <div v-show="step === 3" class="space-y-4">
                         <div class="text-center">
-                            <div
-                                class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#C8A97E]"
-                            >
-                                <Lock class="h-6 w-6" stroke-width="1.5" />
-                            </div>
-                            <h1 class="text-[26px] font-bold leading-[1.2] tracking-[-0.02em] text-white">إنشاء الحساب</h1>
-                            <p class="mt-2 text-[15px] text-white/65">كلمة مرور قوية وعنوان يظهر في الفواتير.</p>
-            </div>
+                            <h2 class="text-xl font-black tracking-tight text-slate-900">إعداد كلمة المرور</h2>
+                            <p class="mt-1 text-sm font-semibold text-slate-600">كلمة مرور قوية وعنوان يظهر في الفواتير.</p>
+                        </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="password">كلمة المرور</label>
+                            <label class="block text-sm font-black text-slate-900" for="password">كلمة المرور</label>
                             <input
                     id="password"
                                 v-model="form.password"
                                 type="password"
                                 name="password"
                     autocomplete="new-password"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px]"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                 />
-                            <p v-if="form.errors.password" class="text-[13px] text-red-400">{{ form.errors.password }}</p>
+                            <p v-if="form.errors.password" class="text-[13px] font-semibold text-red-600">{{ form.errors.password }}</p>
             </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="password_confirmation">تأكيد كلمة المرور</label>
+                            <label class="block text-sm font-black text-slate-900" for="password_confirmation">تأكيد كلمة المرور</label>
                             <input
                     id="password_confirmation"
                                 v-model="form.password_confirmation"
                                 type="password"
                                 name="password_confirmation"
                     autocomplete="new-password"
-                                class="dokany-input w-full px-4 py-3.5 text-[16px]"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                 />
             </div>
 
                         <div class="space-y-2">
-                            <label class="block text-[14px] font-semibold" for="address">
+                            <label class="block text-sm font-black text-slate-900" for="address">
                                 <span class="inline-flex items-center gap-1.5">
-                                    <MapPin class="h-3.5 w-3.5 text-white/50" stroke-width="2" />
+                                    <MapPin class="h-4 w-4 text-indigo-600" stroke-width="2" />
                                     العنوان
                                 </span>
                             </label>
@@ -342,10 +344,10 @@ function submitRegistration(): void {
                                 v-model="form.address"
                                 name="address"
                                 rows="3"
-                                class="dokany-input w-full resize-none px-4 py-3.5 text-[16px] leading-relaxed"
+                                class="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold leading-relaxed text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
                                 placeholder="المدينة، الحي، تفاصيل اختيارية"
                             />
-                            <p v-if="form.errors.address" class="text-[13px] text-red-400">{{ form.errors.address }}</p>
+                            <p v-if="form.errors.address" class="text-[13px] font-semibold text-red-600">{{ form.errors.address }}</p>
                         </div>
         </div>
 
@@ -353,7 +355,7 @@ function submitRegistration(): void {
                         <button
                             v-if="step < 3"
                             type="submit"
-                            class="btn-primary-dark flex w-full items-center justify-center gap-2 rounded-xl py-4 text-[15px] font-semibold transition enabled:hover:bg-[#dfc296] disabled:cursor-not-allowed disabled:opacity-40"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-[15px] font-black text-primary-foreground shadow-sm shadow-indigo-600/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="!stepValid || form.processing"
                         >
                             التالي
@@ -362,69 +364,25 @@ function submitRegistration(): void {
                         <button
                             v-else
                             type="submit"
-                            class="btn-primary-dark flex w-full items-center justify-center gap-2 rounded-xl py-4 text-[15px] font-semibold transition enabled:hover:bg-[#dfc296] disabled:cursor-not-allowed disabled:opacity-40"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-[15px] font-black text-primary-foreground shadow-sm shadow-indigo-600/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                             :disabled="!stepValid || form.processing"
                         >
                             إنشاء الحساب
                             <ArrowRight class="h-[18px] w-[18px]" stroke-width="2.5" />
                         </button>
                     </div>
-                </form>
+                            </form>
 
-                <p class="mt-8 text-center text-[14px] text-white/55">
+                            <p class="mt-5 text-center text-sm font-semibold text-slate-600">
                     عندك حساب؟
-                    <Link :href="login()" class="font-semibold text-[#C8A97E] hover:text-[#B89367] hover:underline">
-                        تسجيل الدخول
-                    </Link>
-                </p>
-            </main>
-        </div>
+                                <Link :href="login()" class="font-black text-indigo-700 hover:text-indigo-800 hover:underline">
+                                    تسجيل الدخول
+                                </Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 </template>
-
-<style scoped>
-.dokany-landing {
-    -webkit-tap-highlight-color: transparent;
-    font-family:
-        'IBM Plex Sans Arabic',
-        'Inter',
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-}
-
-.dokany-landing .font-inter {
-    font-family: 'Inter', 'IBM Plex Sans Arabic', sans-serif;
-}
-
-.dokany-input {
-    border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.08);
-    color: #fafafa;
-    outline: none;
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.dokany-input::placeholder {
-    color: rgba(255, 255, 255, 0.45);
-}
-
-.dokany-input:focus {
-    border-color: #c8a97e;
-    box-shadow: 0 0 0 3px rgba(200, 169, 126, 0.28);
-}
-
-.btn-primary-dark {
-    background-color: #c8a97e;
-    color: #1f0433;
-    box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.12),
-        0 6px 16px -4px rgba(200, 169, 126, 0.35);
-}
-</style>

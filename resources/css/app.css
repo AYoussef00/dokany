@@ -339,6 +339,7 @@ body:has(.storefront-root, .storefront-order-payment) :where([data-slot='sheet-c
 .merchant-pro-shell [data-sidebar='sidebar'][data-mobile='true'] .merchant-pro-nav-scroll,
 .merchant-sidebar-surface .merchant-pro-nav-scroll {
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
 }
 
 .merchant-pro-footer-btn {
@@ -349,4 +350,37 @@ body:has(.storefront-root, .storefront-order-payment) :where([data-slot='sheet-c
 .merchant-pro-footer-btn:hover {
     background: hsl(210 40% 94%) !important;
     color: hsl(222 47% 11%);
+}
+
+/* Shopify-like polish for merchant sidebar */
+.merchant-pro-shell [data-sidebar='menu-button'].merchant-pro-nav-item,
+.merchant-sidebar-surface [data-sidebar='menu-button'].merchant-pro-nav-item {
+    border-radius: 0.85rem;
+    padding-inline: 0.75rem;
+    transition:
+        background-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
+}
+
+.merchant-pro-shell [data-sidebar='menu-button'].merchant-pro-nav-item:not([data-active='true']):active,
+.merchant-sidebar-surface [data-sidebar='menu-button'].merchant-pro-nav-item:not([data-active='true']):active {
+    transform: translateY(0.5px);
+}
+
+.merchant-pro-shell [data-sidebar='menu-button'].merchant-pro-nav-item[data-active='true'],
+.merchant-sidebar-surface [data-sidebar='menu-button'].merchant-pro-nav-item[data-active='true'] {
+    background: hsl(230 84% 96%) !important;
+    box-shadow:
+        inset 0 0 0 1px hsl(245 82% 60% / 0.18),
+        0 1px 0 rgb(15 23 42 / 0.04);
+}
+
+.merchant-pro-shell .merchant-pro-nav-icon-wrap,
+.merchant-sidebar-surface .merchant-pro-nav-icon-wrap {
+    background: hsl(210 40% 98%);
+    color: hsl(245 82% 45%);
+    box-shadow:
+        inset 0 0 0 1px hsl(214 32% 91%),
+        0 1px 0 rgb(15 23 42 / 0.03);
 }

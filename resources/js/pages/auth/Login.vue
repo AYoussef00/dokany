@@ -31,218 +31,156 @@ const showPassword = ref(false);
     <div
         dir="rtl"
         lang="ar"
-        class="dokany-landing min-h-screen bg-[#F8F8F7] text-[#111111] antialiased selection:bg-[#C8A97E]/25"
+        class="min-h-screen bg-white text-slate-900 antialiased selection:bg-indigo-500/15"
     >
-        <div
-            class="relative z-10 mx-auto min-h-screen max-w-[430px] bg-white shadow-[0_4px_40px_-12px_rgba(17,17,17,0.06)] sm:my-8 sm:min-h-[calc(100vh-4rem)] sm:rounded-2xl sm:ring-1 sm:ring-[#E6E5E2]"
-        >
-            <header
-                class="border-b border-[#E6E5E2] bg-white/90 px-6 py-4 backdrop-blur-xl backdrop-saturate-150 sm:rounded-t-2xl"
-            >
-                <div class="flex items-center justify-between gap-3">
-                    <Link
-                        :href="home()"
-                        class="flex items-center gap-1 text-[14px] font-semibold text-[#C8A97E] transition hover:text-[#B89367]"
-                    >
-                        <ArrowLeft class="h-4 w-4" stroke-width="2" />
-                        الرئيسية
-                    </Link>
-                    <span class="text-[16px] font-bold tracking-[-0.02em]">دكاني</span>
-                    <Link
-                        v-if="canRegister"
-                        :href="register()"
-                        class="text-[14px] font-semibold text-[#6B7280] transition hover:text-[#111111]"
-                    >
-                        حساب جديد
-                    </Link>
-                    <span v-else class="w-14" aria-hidden="true" />
-                </div>
+        <main class="relative min-h-screen">
+            <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_0%,rgba(79,70,229,0.14),transparent_60%),linear-gradient(180deg,#ffffff_0%,#f8fafc_55%,#ffffff_100%)]" />
+
+            <!-- Minimal header -->
+            <header class="relative z-10 mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+                <Link
+                    :href="home()"
+                    class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                    <ArrowLeft class="h-4 w-4" stroke-width="2" />
+                    الرئيسية
+                </Link>
+                <Link
+                    :href="home()"
+                    class="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-slate-900 hover:bg-slate-100"
+                    aria-label="Dokany"
+                    dir="ltr"
+                >
+                    <span class="text-base font-black tracking-tight">Dokany</span>
+                </Link>
             </header>
 
-            <main
-                class="relative px-6 pb-14 pt-10 [background:linear-gradient(165deg,#FFFFFF_0%,#FFFFFF_50%,#F8F8F7_100%)]"
-            >
-                <div
-                    class="pointer-events-none absolute inset-x-0 top-0 h-40 opacity-40 [background:radial-gradient(ellipse_80%_70%_at_50%_0%,rgba(200,169,126,0.12),transparent_70%)]"
-                    aria-hidden="true"
-                />
-
-                <div class="relative">
-                    <div
-                        class="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F3EFE6] text-[#111111] shadow-[0_2px_12px_-4px_rgba(17,17,17,0.08)]"
-                    >
-                        <LogIn class="h-7 w-7" stroke-width="1.5" />
-                    </div>
-
-                    <h1 class="text-center text-[28px] font-bold leading-[1.15] tracking-[-0.02em]">
-                        تسجيل الدخول
-                    </h1>
-                    <p class="mx-auto mt-2 max-w-[24ch] text-center text-[16px] leading-relaxed text-[#6B7280]">
-                        مرحباً بعودتك — أدخل بياناتك للمتابعة.
-                    </p>
-
-                    <div
-                        v-if="status"
-                        class="mt-8 rounded-xl border border-[#C8A97E]/35 bg-[#FDFBF7] px-4 py-3 text-center text-[14px] font-medium text-[#6B7280]"
-                        role="status"
-                    >
-                        {{ status }}
-                    </div>
-
-                    <Form
-                        v-bind="store.form()"
-                        :reset-on-success="['password']"
-                        v-slot="{ errors, processing }"
-                        class="mt-8 flex flex-col gap-6"
-                    >
-                        <div class="space-y-5">
-                            <div class="space-y-2">
-                                <label class="flex items-center gap-1.5 text-[14px] font-semibold text-[#111111]" for="email">
-                                    <Mail class="h-3.5 w-3.5 text-[#C8A97E]" stroke-width="2" />
-                                    البريد الإلكتروني
-                                </label>
-                                <input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autofocus
-                                    :tabindex="1"
-                                    autocomplete="email"
-                                    class="dokany-input w-full px-4 py-3.5 text-[16px] font-inter"
-                                    placeholder="you@example.com"
-                                    dir="ltr"
-                                />
-                                <InputError :message="errors.email" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <label class="flex items-center gap-1.5 text-[14px] font-semibold text-[#111111]" for="password">
-                                        <Lock class="h-3.5 w-3.5 text-[#C8A97E]" stroke-width="2" />
-                                        كلمة المرور
-                                    </label>
-                                    <Link
-                                        v-if="canResetPassword"
-                                        :href="request()"
-                                        class="text-[13px] font-semibold text-[#C8A97E] transition hover:text-[#B89367] hover:underline"
-                                        :tabindex="5"
-                                    >
-                                        نسيت كلمة المرور؟
-                                    </Link>
+            <div class="relative mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-6xl items-center justify-center px-6 py-6">
+                <div class="w-full max-w-md">
+                    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 bg-slate-50 px-6 py-5 sm:px-8">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <h1 class="text-2xl font-black tracking-tight text-slate-900">تسجيل الدخول</h1>
                                 </div>
-                                <div class="relative">
-                                    <input
-                                        id="password"
-                                        :type="showPassword ? 'text' : 'password'"
-                                        name="password"
-                                        required
-                                        :tabindex="2"
-                                        autocomplete="current-password"
-                                        class="dokany-input w-full px-4 py-3.5 pe-12 text-[16px]"
-                                        placeholder="••••••••"
-                                    />
-                                    <button
-                                        type="button"
-                                        class="absolute inset-y-0 end-0 flex items-center px-3 text-[#6B7280] transition hover:text-[#111111]"
-                                        :tabindex="-1"
-                                        :aria-label="showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
-                                        @click="showPassword = !showPassword"
-                                    >
-                                        <EyeOff v-if="showPassword" class="h-[18px] w-[18px]" stroke-width="2" />
-                                        <Eye v-else class="h-[18px] w-[18px]" stroke-width="2" />
-                                    </button>
+                                <div class="inline-flex size-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
+                                    <LogIn class="h-6 w-6" stroke-width="2" />
                                 </div>
-                                <InputError :message="errors.password" />
                             </div>
-
-                            <label
-                                class="flex cursor-pointer items-center gap-3 rounded-xl border border-[#E6E5E2] bg-[#F8F8F7]/80 px-4 py-3.5 transition hover:border-[#C8A97E]/35"
-                            >
-                                <input
-                                    id="remember"
-                                    type="checkbox"
-                                    name="remember"
-                                    class="size-4 shrink-0 rounded border-[#D1D5DB] text-[#111111] accent-[#111111]"
-                                    :tabindex="3"
-                                />
-                                <span class="text-[14px] font-medium text-[#4B5563]">تذكّرني على هذا الجهاز</span>
-                            </label>
                         </div>
 
-                        <button
-                            type="submit"
-                            class="btn-primary-dark flex w-full items-center justify-center gap-2 rounded-xl py-4 text-[15px] font-semibold text-white transition enabled:hover:bg-[#222222] disabled:cursor-not-allowed disabled:opacity-50"
-                            :tabindex="4"
-                            :disabled="processing"
-                            data-test="login-button"
-                        >
-                            <span
-                                v-if="processing"
-                                class="inline-block size-5 animate-spin rounded-full border-2 border-white border-t-transparent"
-                                aria-hidden="true"
-                            />
-                            <span>{{ processing ? 'جاري الدخول…' : 'دخول' }}</span>
-                        </button>
-
-                        <p v-if="canRegister" class="text-center text-[14px] text-[#6B7280]">
-                            ليس لديك حساب؟
-                            <Link
-                                :href="register()"
-                                class="font-semibold text-[#C8A97E] transition hover:text-[#B89367] hover:underline"
-                                :tabindex="6"
+                        <div class="px-6 py-6 sm:px-8">
+                            <div
+                                v-if="status"
+                                class="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-semibold text-slate-700"
+                                role="status"
                             >
-                                ابدأ الآن
-                            </Link>
-                        </p>
-                    </Form>
+                                {{ status }}
+                            </div>
+
+                            <Form
+                                v-bind="store.form()"
+                                :reset-on-success="['password']"
+                                v-slot="{ errors, processing }"
+                                class="flex flex-col gap-4"
+                            >
+                                <div class="space-y-2">
+                                    <label class="flex items-center gap-2 text-sm font-black text-slate-900" for="email">
+                                        <Mail class="h-4 w-4 text-indigo-600" stroke-width="2" />
+                                        البريد الإلكتروني
+                                    </label>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        name="email"
+                                        required
+                                        autofocus
+                                        :tabindex="1"
+                                        autocomplete="email"
+                                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+                                        placeholder="you@example.com"
+                                        dir="ltr"
+                                    />
+                                    <InputError :message="errors.email" />
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <label class="flex items-center gap-2 text-sm font-black text-slate-900" for="password">
+                                            <Lock class="h-4 w-4 text-indigo-600" stroke-width="2" />
+                                            كلمة المرور
+                                        </label>
+                                        <Link
+                                            v-if="canResetPassword"
+                                            :href="request()"
+                                            class="text-sm font-semibold text-indigo-700 hover:text-indigo-800 hover:underline"
+                                            :tabindex="5"
+                                        >
+                                            نسيت كلمة المرور؟
+                                        </Link>
+                                    </div>
+                                    <div class="relative">
+                                        <input
+                                            id="password"
+                                            :type="showPassword ? 'text' : 'password'"
+                                            name="password"
+                                            required
+                                            :tabindex="2"
+                                            autocomplete="current-password"
+                                            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pe-12 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15"
+                                            placeholder="••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="absolute inset-y-0 end-0 flex items-center px-3 text-slate-500 transition hover:text-slate-900"
+                                            :tabindex="-1"
+                                            :aria-label="showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+                                            @click="showPassword = !showPassword"
+                                        >
+                                            <EyeOff v-if="showPassword" class="h-[18px] w-[18px]" stroke-width="2" />
+                                            <Eye v-else class="h-[18px] w-[18px]" stroke-width="2" />
+                                        </button>
+                                    </div>
+                                    <InputError :message="errors.password" />
+                                </div>
+
+                                <label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition hover:bg-slate-100">
+                                    <input
+                                        id="remember"
+                                        type="checkbox"
+                                        name="remember"
+                                        class="size-4 shrink-0 rounded border-slate-300 text-indigo-600 accent-indigo-600"
+                                        :tabindex="3"
+                                    />
+                                    <span class="text-sm font-semibold text-slate-700">تذكّرني على هذا الجهاز</span>
+                                </label>
+
+                                <button
+                                    type="submit"
+                                    class="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-[15px] font-black text-primary-foreground shadow-sm shadow-indigo-600/20 transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                                    :tabindex="4"
+                                    :disabled="processing"
+                                    data-test="login-button"
+                                >
+                                    <span
+                                        v-if="processing"
+                                        class="inline-block size-5 animate-spin rounded-full border-2 border-white border-t-transparent"
+                                        aria-hidden="true"
+                                    />
+                                    <span>{{ processing ? 'جاري الدخول…' : 'دخول' }}</span>
+                                </button>
+
+                                <p class="pt-2 text-center text-sm font-semibold text-slate-600">
+                                    ليس لديك حساب؟
+                                    <Link :href="register()" class="font-black text-indigo-700 hover:text-indigo-800 hover:underline">
+                                        تسجيل
+                                    </Link>
+                                </p>
+                            </Form>
+                        </div>
+                    </div>
                 </div>
-            </main>
-        </div>
+            </div>
+        </main>
     </div>
 </template>
-
-<style scoped>
-.dokany-landing {
-    -webkit-tap-highlight-color: transparent;
-    font-family:
-        'IBM Plex Sans Arabic',
-        'Inter',
-        -apple-system,
-        BlinkMacSystemFont,
-        'Segoe UI',
-        sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-}
-
-.dokany-landing .font-inter {
-    font-family: 'Inter', 'IBM Plex Sans Arabic', sans-serif;
-}
-
-.dokany-input {
-    border-radius: 0.75rem;
-    border: 1px solid #e6e5e2;
-    background: #fff;
-    outline: none;
-    transition:
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.dokany-input::placeholder {
-    color: #9ca3af;
-}
-
-.dokany-input:focus {
-    border-color: #c8a97e;
-    box-shadow: 0 0 0 3px rgba(200, 169, 126, 0.2);
-}
-
-.btn-primary-dark {
-    background-color: #111111;
-    box-shadow:
-        0 1px 2px rgba(17, 17, 17, 0.06),
-        0 6px 16px -4px rgba(17, 17, 17, 0.1);
-}
-</style>

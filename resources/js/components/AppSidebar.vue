@@ -257,7 +257,7 @@ function onSellerLogoutClick(): void {
         <SidebarContent
             :class="
                 isSeller
-                    ? 'merchant-pro-nav-scroll gap-0 px-0 pb-3 pt-2 md:pb-4 md:pt-1'
+                    ? 'merchant-pro-nav-scroll gap-0 overflow-x-hidden px-0 pb-3 pt-2 md:pb-4 md:pt-1'
                     : 'px-0 pb-4 pt-2 md:pt-0'
             "
         >
