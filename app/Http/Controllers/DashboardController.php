@@ -69,7 +69,7 @@ class DashboardController extends Controller
                     ->map(fn ($r) => ['country' => $r->country, 'visitors' => (int) $r->visitors])
                     ->all(),
                 'top_pages_30d' => PageView::query()
-                    ->selectRaw('COALESCE(component, path) as route, path, component, COUNT(*) as views, AVG(duration_seconds) as avg_seconds', [])
+                    ->selectRaw('path, COALESCE(MAX(component), path) as route, COUNT(*) as views, AVG(duration_seconds) as avg_seconds', [])
                     ->where('started_at', '>=', now()->subDays(30))
                     ->where('path', 'not like', '/dashboard%')
                     ->where('path', 'not like', '/merchant%')
