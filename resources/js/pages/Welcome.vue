@@ -11,7 +11,7 @@ import {
     Star,
     Zap,
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { dashboard, login, register } from '@/routes';
 import type { User as AuthUser } from '@/types';
 
@@ -20,6 +20,10 @@ const copied = ref(false);
 const page = usePage<{ auth: { user: AuthUser | null } }>();
 const isAuthenticated = computed(() => page.props.auth.user !== null);
 const year = computed(() => new Date().getFullYear());
+
+const adOpen = ref(false);
+const AD_SESSION_KEY = 'dokany:ad:dokany_ad_v1_1:closed';
+const adImageUrl = '/dokany_ad_v1_1.png';
 
 const brandUrlExample = 'dokany.com/yourbrand';
 
@@ -101,6 +105,30 @@ function handleCopyLink(): void {
     }
     done();
 }
+
+function closeAd(): void {
+    adOpen.value = false;
+    try {
+        globalThis.sessionStorage?.setItem(AD_SESSION_KEY, '1');
+    } catch {
+        // ignore
+    }
+}
+
+onMounted(() => {
+    // Only show to visitors (not logged-in users).
+    if (isAuthenticated.value) {
+        return;
+    }
+    try {
+        if (globalThis.sessionStorage?.getItem(AD_SESSION_KEY) === '1') {
+            return;
+        }
+    } catch {
+        // ignore
+    }
+    adOpen.value = true;
+});
 </script>
 
 <template>
@@ -115,6 +143,43 @@ function handleCopyLink(): void {
     </Head>
 
     <div dir="rtl" lang="ar" class="dokany-landing min-h-screen bg-white text-slate-900">
+        <Teleport to="body">
+            <div
+                v-if="adOpen"
+                class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
+                role="dialog"
+                aria-modal="true"
+                aria-label="إعلان"
+                @click.self="closeAd"
+            >
+                <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+                    <button
+                        type="button"
+                        class="absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-sm ring-1 ring-black/10 transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20"
+                        aria-label="إغلاق"
+                        @click="closeAd"
+                    >
+                        <span class="text-xl leading-none">×</span>
+                    </button>
+
+                    <Link
+                        :href="register()"
+                        class="block"
+                        aria-label="افتح الإعلان وسجّل حساب جديد"
+                        @click="closeAd"
+                    >
+                        <img
+                            :src="adImageUrl"
+                            alt="إعلان"
+                            class="h-auto w-full cursor-pointer select-none"
+                            loading="eager"
+                            decoding="async"
+                        />
+                    </Link>
+                </div>
+            </div>
+        </Teleport>
+
         <!-- Header -->
         <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur">
             <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
