@@ -168,13 +168,13 @@ function onSellerLogoutClick(): void {
     >
         <template v-if="isSeller && sellerUser">
             <div
-                class="merchant-pro-mobile-drawer-head border-b border-white/[0.08] px-4 pb-5 md:hidden"
+                class="merchant-pro-mobile-drawer-head border-b border-sidebar-border px-4 pb-5 md:hidden"
                 style="padding-top: max(1.125rem, env(safe-area-inset-top, 0px))"
             >
                 <div class="mb-4 flex justify-end">
                     <button
                         type="button"
-                        class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.06] text-sidebar-foreground transition hover:bg-white/[0.1]"
+                        class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-sidebar-border bg-sidebar-accent text-sidebar-foreground transition hover:bg-sidebar-accent/80"
                         aria-label="إغلاق القائمة"
                         @click="setOpenMobile(false)"
                     >
@@ -187,12 +187,12 @@ function onSellerLogoutClick(): void {
                 <Link
                     :href="merchantStoreSettings.url()"
                     prefetch
-                    class="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.06] px-3.5 py-3 shadow-[inset_0_1px_0_rgb(255_255_255_/0.06)] transition hover:border-white/[0.12] hover:bg-white/[0.09]"
+                    class="flex items-center justify-between gap-3 rounded-2xl border border-sidebar-border bg-sidebar-accent px-3.5 py-3 shadow-[inset_0_1px_0_rgb(255_255_255_/0.7)] transition hover:bg-sidebar-accent/80"
                     @click="setOpenMobile(false)"
                 >
                     <div class="flex min-w-0 flex-1 items-center gap-3">
                         <span
-                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground shadow-sm ring-1 ring-white/15"
+                            class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground shadow-sm ring-1 ring-sidebar-border/60"
                         >
                             {{ getInitials(sellerUser.name).slice(0, 1) || '—' }}
                         </span>
@@ -267,7 +267,7 @@ function onSellerLogoutClick(): void {
                     group-label="عام"
                     :merchant-pro="true"
                 />
-                <SidebarSeparator class="mx-4 my-3 bg-white/[0.07] md:mx-3" />
+                    <SidebarSeparator class="mx-4 my-3 bg-sidebar-border md:mx-3" />
                 <NavMain
                     :items="sellerNavToolsItems"
                     group-label="أدوات"
@@ -283,7 +283,7 @@ function onSellerLogoutClick(): void {
 
         <SidebarFooter
             v-if="isSeller"
-            class="mt-auto border-t border-white/[0.08] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:p-2 md:pb-2"
+            class="mt-auto border-t border-sidebar-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] md:p-2 md:pb-2"
         >
             <SidebarMenu class="gap-2 md:gap-1">
                 <SidebarMenuItem>

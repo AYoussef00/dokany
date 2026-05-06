@@ -35,7 +35,7 @@ function onMerchantNavClick(): void {
     <SidebarGroup :class="merchantPro ? 'px-3 py-0.5' : 'px-2 py-0'">
         <SidebarGroupLabel
             v-if="merchantPro"
-            class="mb-2.5 h-auto px-1 py-0 text-[11px] font-medium text-sidebar-foreground/45"
+            class="mb-2.5 h-auto px-1 py-0 text-[11px] font-semibold tracking-wide text-sidebar-foreground/55"
         >
             {{ groupLabel }}
         </SidebarGroupLabel>
@@ -67,7 +67,7 @@ function onMerchantNavClick(): void {
                     >
                         <span
                             v-if="merchantPro"
-                            class="merchant-pro-nav-icon-wrap flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.08] text-[#e8d5b5] shadow-[inset_0_0_0_1px_rgb(255_255_255_/0.06)]"
+                            class="merchant-pro-nav-icon-wrap flex size-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground shadow-[inset_0_0_0_1px_hsl(var(--sidebar-border))]"
                         >
                             <component :is="item.icon" class="size-[1.125rem] stroke-[1.75]" />
                         </span>
