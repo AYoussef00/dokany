@@ -249,6 +249,28 @@
     letter-spacing: 0.02em;
 }
 
+/* =========================
+ * Admin dashboard (Shopify-like)
+ * ========================= */
+
+.dokany-admin-dashboard {
+    max-width: 1120px;
+    margin-inline: auto;
+}
+
+.dokany-admin-dashboard .dokany-stat-card {
+    box-shadow:
+        0 1px 0 rgb(15 23 42 / 0.03),
+        0 10px 30px rgb(15 23 42 / 0.06);
+    border-color: hsl(214 32% 91% / 0.9);
+}
+
+.dokany-admin-dashboard .dokany-stat-card:hover {
+    box-shadow:
+        0 1px 0 rgb(15 23 42 / 0.04),
+        0 14px 40px rgb(15 23 42 / 0.08);
+}
+
 /* واجهة روابط المتاجر العامة (/shop/...) — Arimo + إعادة تعريف --font-sans ليتوافق مع body.font-sans و Tailwind preflight */
 .storefront-root,
 .storefront-order-payment {

@@ -250,10 +250,20 @@ onUnmounted(() => {
     <Head :title="pageTitle" />
 
     <div
-        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
+        class="dokany-admin-dashboard flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6"
         :dir="isSeller ? 'rtl' : undefined"
         :lang="isSeller ? 'ar' : undefined"
     >
+        <div
+            v-if="isAdmin"
+            dir="rtl"
+            lang="ar"
+            class="flex flex-col gap-1"
+        >
+            <h1 class="text-lg font-bold tracking-tight text-foreground md:text-xl">لوحة التحكم</h1>
+            <p class="text-sm text-muted-foreground">نظرة سريعة على أداء المنصة خلال آخر 30 يوم.</p>
+        </div>
+
         <div
             v-if="isAdmin && dashboardStats"
             dir="rtl"
@@ -262,7 +272,7 @@ onUnmounted(() => {
             aria-live="polite"
             aria-atomic="true"
         >
-                <div class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                <div class="dokany-stat-card rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-sm font-medium text-muted-foreground">زوار اليوم</span>
                         <Users class="size-5 shrink-0 text-primary" stroke-width="1.75" />
@@ -273,7 +283,7 @@ onUnmounted(() => {
                     <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة (حسب Session) خلال آخر 24 ساعة</p>
                 </div>
 
-                <div class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                <div class="dokany-stat-card rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-sm font-medium text-muted-foreground">إجمالي الزوار</span>
                         <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
@@ -284,7 +294,7 @@ onUnmounted(() => {
                     <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة منذ بداية التتبع</p>
                 </div>
 
-                <div class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                <div class="dokany-stat-card rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-sm font-medium text-muted-foreground">أعلى الدول (30 يوم)</span>
                         <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />

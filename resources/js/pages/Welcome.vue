@@ -5,6 +5,7 @@ import {
     ChevronDown,
     CircleUser,
     Copy,
+    MessageCircle,
     Link2,
     Package,
     Star,
@@ -545,6 +546,18 @@ function handleCopyLink(): void {
                 </div>
             </div>
         </footer>
+
+        <a
+            href="https://wa.me/966535815072"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="fixed bottom-5 right-5 z-50 inline-flex size-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-[#25D366]/25"
+            aria-label="WhatsApp"
+            title="WhatsApp"
+            style="bottom: max(1.25rem, env(safe-area-inset-bottom, 0px)); right: max(1.25rem, env(safe-area-inset-right, 0px))"
+        >
+            <MessageCircle class="size-6" stroke-width="2.25" />
+        </a>
     </div>
 </template>
 
