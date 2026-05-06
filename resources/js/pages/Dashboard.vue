@@ -19,7 +19,6 @@ import {
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
 import { useSidebar } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 
@@ -35,6 +34,13 @@ type DashboardStats = {
     visitors_today: number;
     visitors_total: number;
     top_countries_30d: { country: string; visitors: number }[];
+    top_pages_30d: { path: string; views: number; avg_seconds: number }[];
+    recent_journeys: {
+        session: string;
+        user_id: number | null;
+        total_seconds: number;
+        pages: { path: string; seconds: number }[];
+    }[];
 };
 
 type OrderStatusSlice = {
@@ -151,6 +157,11 @@ const performanceLineChart = computed(() => {
 
 const dashboardStats = computed(() => page.props.dashboardStats);
 
+const topPagesMaxViews = computed(() => {
+    const rows = dashboardStats.value?.top_pages_30d ?? [];
+    return Math.max(1, ...rows.map((r) => r.views));
+});
+
 function formatRevenue(amount: number, currency: string): string {
     const formatted = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 0,
@@ -161,6 +172,21 @@ function formatRevenue(amount: number, currency: string): string {
 
 function formatEnInteger(value: number): string {
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value);
+}
+
+function formatDuration(seconds: number): string {
+    const s = Math.max(0, Math.round(seconds));
+    if (s < 60) {
+        return `${s}s`;
+    }
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    if (m < 60) {
+        return `${m}m ${rem}s`;
+    }
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return `${h}h ${mm}m`;
 }
 
 function maybeShowSellerRenewalWarning(): void {
@@ -250,7 +276,7 @@ onUnmounted(() => {
     <Head :title="pageTitle" />
 
     <div
-        class="dokany-admin-dashboard flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6"
+        class="dokany-admin-dashboard flex h-full flex-1 flex-col gap-6 overflow-x-hidden rounded-xl p-4 md:p-6"
         :dir="isSeller ? 'rtl' : undefined"
         :lang="isSeller ? 'ar' : undefined"
     >
@@ -268,11 +294,11 @@ onUnmounted(() => {
             v-if="isAdmin && dashboardStats"
             dir="rtl"
             lang="ar"
-            class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            class="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
             aria-live="polite"
             aria-atomic="true"
         >
-                <div class="dokany-stat-card rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                <div class="dokany-stat-card h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-sm font-medium text-muted-foreground">زوار اليوم</span>
                         <Users class="size-5 shrink-0 text-primary" stroke-width="1.75" />
@@ -283,7 +309,7 @@ onUnmounted(() => {
                     <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة (حسب Session) خلال آخر 24 ساعة</p>
                 </div>
 
-                <div class="dokany-stat-card rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                <div class="dokany-stat-card h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-sm font-medium text-muted-foreground">إجمالي الزوار</span>
                         <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
@@ -294,7 +320,7 @@ onUnmounted(() => {
                     <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة منذ بداية التتبع</p>
                 </div>
 
-                <div class="dokany-stat-card rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
+                <div class="dokany-stat-card h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                     <div class="flex items-center justify-between gap-2">
                         <span class="text-sm font-medium text-muted-foreground">أعلى الدول (30 يوم)</span>
                         <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
@@ -316,9 +342,7 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-            <div
-                class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border"
-            >
+            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-muted-foreground">إجمالي الإيرادات</span>
                     <Wallet class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
@@ -328,9 +352,7 @@ onUnmounted(() => {
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">من اشتراكات التجار النشطين (مبالغ مسجّلة + التحويلات المؤكدة)</p>
             </div>
-            <div
-                class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border"
-            >
+            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-muted-foreground">عدد التجار</span>
                     <Store class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
@@ -340,9 +362,7 @@ onUnmounted(() => {
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">تجار نشطون حالياً</p>
             </div>
-            <div
-                class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border"
-            >
+            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-muted-foreground">طلبات قيد المراجعة</span>
                     <ClipboardList class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
@@ -352,9 +372,7 @@ onUnmounted(() => {
                 </p>
                 <p class="mt-1 text-xs text-muted-foreground">في صفحة Requests للإدارة</p>
             </div>
-            <div
-                class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border"
-            >
+            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-muted-foreground">إجمالي المنتجات</span>
                     <Package class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
@@ -366,9 +384,7 @@ onUnmounted(() => {
                     كل المنتجات المضافة من التجار المسجّلين في المنصة
                 </p>
             </div>
-            <div
-                class="rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border"
-            >
+            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-sm font-medium text-muted-foreground">إجمالي طلبات المتاجر</span>
                     <ShoppingCart class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
@@ -379,6 +395,96 @@ onUnmounted(() => {
                 <p class="mt-1 text-xs text-muted-foreground">
                     طلبات العملاء المسجّلة لجميع التجار (كل الحالات)
                 </p>
+            </div>
+        </div>
+
+        <div v-if="isAdmin && dashboardStats" dir="rtl" lang="ar" class="grid gap-4 xl:grid-cols-2">
+            <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm dark:border-sidebar-border">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex flex-col gap-0.5">
+                        <h2 class="text-sm font-semibold text-foreground">أكثر الصفحات زيارة (30 يوم)</h2>
+                        <p class="text-xs text-muted-foreground">Views + متوسط مدة البقاء في الصفحة.</p>
+                    </div>
+                    <TrendingUp class="size-5 shrink-0 text-primary" stroke-width="1.75" />
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <div
+                        v-for="row in dashboardStats.top_pages_30d"
+                        :key="row.path"
+                        class="rounded-lg border border-sidebar-border/60 bg-background/60 p-3"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-foreground" dir="ltr" lang="en">{{ row.path }}</p>
+                                <p class="mt-0.5 text-xs text-muted-foreground">
+                                    متوسط: <span class="font-medium text-foreground">{{ formatDuration(row.avg_seconds) }}</span>
+                                </p>
+                            </div>
+                            <div class="shrink-0 text-right" dir="ltr" lang="en">
+                                <p class="text-sm font-semibold tabular-nums text-foreground">{{ formatEnInteger(row.views) }}</p>
+                                <p class="text-[11px] text-muted-foreground">views</p>
+                            </div>
+                        </div>
+                        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                                class="h-full rounded-full bg-primary/80"
+                                :style="{ width: `${Math.min(100, Math.round((row.views / topPagesMaxViews) * 100))}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <p v-if="dashboardStats.top_pages_30d.length === 0" class="text-sm text-muted-foreground">
+                        لا توجد بيانات كافية بعد. افتح صفحات الموقع ثم ارجع هنا.
+                    </p>
+                </div>
+            </div>
+
+            <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm dark:border-sidebar-border">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex flex-col gap-0.5">
+                        <h2 class="text-sm font-semibold text-foreground">رحلات المستخدمين (آخر 7 أيام)</h2>
+                        <p class="text-xs text-muted-foreground">كل Session: ترتيب الصفحات + الوقت في كل صفحة.</p>
+                    </div>
+                    <Activity class="size-5 shrink-0 text-primary" stroke-width="1.75" />
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <div
+                        v-for="journey in dashboardStats.recent_journeys"
+                        :key="journey.session"
+                        class="rounded-lg border border-sidebar-border/60 bg-background/60 p-3"
+                    >
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="text-xs text-muted-foreground" dir="ltr" lang="en">
+                                session: <span class="font-mono text-foreground">{{ journey.session.slice(0, 10) }}</span>
+                                <span v-if="journey.user_id" class="ml-2">user: <span class="font-semibold text-foreground">#{{ journey.user_id }}</span></span>
+                            </div>
+                            <div class="text-xs text-muted-foreground">
+                                الإجمالي: <span class="font-semibold text-foreground">{{ formatDuration(journey.total_seconds) }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 grid gap-2">
+                            <div
+                                v-for="(p, idx) in journey.pages"
+                                :key="`${journey.session}:${idx}:${p.path}`"
+                                class="flex items-center justify-between gap-3 rounded-md bg-background/70 px-3 py-2"
+                            >
+                                <p class="min-w-0 truncate text-xs font-medium text-foreground" dir="ltr" lang="en">
+                                    {{ idx + 1 }}. {{ p.path }}
+                                </p>
+                                <p class="shrink-0 text-xs font-semibold tabular-nums text-foreground" dir="ltr" lang="en">
+                                    {{ formatDuration(p.seconds) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p v-if="dashboardStats.recent_journeys.length === 0" class="text-sm text-muted-foreground">
+                        لا توجد رحلات بعد. افتح الموقع من متصفح جديد وجرب التنقل بين الصفحات.
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -662,54 +768,11 @@ onUnmounted(() => {
             </div>
         </div>
 
-        <div v-if="isAdmin" class="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-        </div>
-        <div
-            v-if="isAdmin"
-            class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
-        >
-            <PlaceholderPattern />
-        </div>
         <div
             v-else-if="!isSeller"
-            class="grid auto-rows-min gap-4 md:grid-cols-3"
+            class="rounded-xl border border-sidebar-border/70 bg-card p-6 text-center text-sm text-muted-foreground dark:border-sidebar-border"
         >
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-        </div>
-        <div
-            v-if="!isSeller"
-            class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
-        >
-            <PlaceholderPattern />
+            لا توجد بيانات لعرضها.
         </div>
     </div>
 </template>

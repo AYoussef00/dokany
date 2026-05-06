@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Analytics\PageViewController;
 use App\Http\Controllers\Onboarding\SubscriptionPaymentController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderPaymentController;
@@ -68,5 +69,9 @@ Route::prefix('admin')
 Route::prefix('merchant')
     ->middleware('web')
     ->group(base_path('routes/merchant.php'));
+
+Route::post('analytics/pageview', [PageViewController::class, 'store'])
+    ->middleware(['web', 'throttle:120,1'])
+    ->name('analytics.pageview');
 
 require __DIR__.'/settings.php';

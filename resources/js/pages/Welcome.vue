@@ -535,9 +535,9 @@ function handleCopyLink(): void {
                         </ul>
                     </div>
                     <div>
-                        <h3 class="text-sm font-black text-slate-900">ملاحظة</h3>
+                        <h3 class="text-sm font-black text-slate-900">تواصل معنا</h3>
                         <p class="mt-4 text-sm leading-relaxed text-slate-600">
-                            لو تحب نضيف صور/سكرين شوت حقيقية من متجرك أو من لوحة التحكم هنا بدل الـpreview placeholder، ابعتهالي وأنا أركّبها بشكل احترافي.
+                            لو عندك أي سؤال أو محتاج مساعدة في إعداد متجرك، تواصل معنا وسنساعدك فوراً.
                         </p>
                     </div>
                 </div>
