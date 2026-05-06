@@ -272,6 +272,7 @@ body:has(.storefront-root, .storefront-order-payment) :where([data-slot='sheet-c
     box-shadow:
         0 18px 50px rgb(15 23 42 / 0.08),
         inset 0 1px 0 rgb(255 255 255 / 0.7) !important;
+    overflow-x: hidden;
 }
 
 [data-slot='sidebar-wrapper'].merchant-pro-shell {
@@ -334,6 +335,7 @@ body:has(.storefront-root, .storefront-order-payment) :where([data-slot='sheet-c
     width: min(100vw, 20.5rem) !important;
     max-width: 20.5rem !important;
     border-inline-start: 1px solid hsl(214 32% 91%);
+    overflow-x: hidden;
 }
 
 .merchant-pro-shell [data-sidebar='sidebar'][data-mobile='true'] .merchant-pro-nav-scroll,
