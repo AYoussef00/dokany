@@ -43,12 +43,60 @@ initializeTheme();
 initializeFlashToast();
 
 // --- Lightweight analytics (page duration / journey) ---
+const FALLBACK_ANALYTICS_EXCLUDED_PREFIXES = ['/dashboard', '/merchant', '/settings'];
+
 let currentPath = globalThis.location?.pathname ?? '/';
 let startedAtMs = Date.now();
 let currentComponent: string | null = null;
+let analyticsExcludedPrefixes: string[] = [...FALLBACK_ANALYTICS_EXCLUDED_PREFIXES];
+
+function normalizeAnalyticsExcludedPrefixes(input: unknown): string[] | null {
+    if (!Array.isArray(input)) {
+        return null;
+    }
+    const out: string[] = [];
+    for (const x of input) {
+        if (typeof x === 'string' && x.length > 0) {
+            out.push(x.startsWith('/') ? x : `/${x}`);
+        }
+    }
+    return out.length > 0 ? out : null;
+}
+
+/** Mirrors App\Support\Analytics\PublicPageViewPathRules::isExcludedFromTracking */
+function isPathExcludedFromPublicAnalytics(path: string, prefixes: string[]): boolean {
+    const normalized = `/${path.replace(/^\/+/, '')}`;
+    for (const prefix of prefixes) {
+        const p = `/${prefix.replace(/^\/+/, '')}`;
+        const base = p.replace(/\/+$/, '') || '/';
+        if (normalized === base || normalized.startsWith(`${base}/`)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function shouldTrackPath(path: string): boolean {
-    return !/^\/(dashboard|merchant|settings)(\/|$)/.test(path);
+    return !isPathExcludedFromPublicAnalytics(path, analyticsExcludedPrefixes);
+}
+
+function syncAnalyticsPrefixesFromInertiaPage(page: unknown): void {
+    try {
+        if (!page || typeof page !== 'object') {
+            return;
+        }
+        const props = (page as { props?: unknown }).props;
+        if (!props || typeof props !== 'object') {
+            return;
+        }
+        const dokany = (props as { dokany?: { analyticsPublicPathExcludePrefixes?: unknown } }).dokany;
+        const next = normalizeAnalyticsExcludedPrefixes(dokany?.analyticsPublicPathExcludePrefixes);
+        if (next) {
+            analyticsExcludedPrefixes = next;
+        }
+    } catch {
+        // ignore
+    }
 }
 
 function tryReadInitialComponent(): void {
@@ -58,7 +106,8 @@ function tryReadInitialComponent(): void {
         if (!raw) {
             return;
         }
-        const page = JSON.parse(raw) as { component?: unknown; url?: unknown };
+        const page = JSON.parse(raw) as { component?: unknown; url?: unknown; props?: unknown };
+        syncAnalyticsPrefixesFromInertiaPage(page);
         if (typeof page.component === 'string' && page.component.length > 0) {
             currentComponent = page.component;
         }
@@ -131,6 +180,7 @@ router.on('start', () => {
 router.on('success', (event: any) => {
     try {
         const page = event?.detail?.page;
+        syncAnalyticsPrefixesFromInertiaPage(page);
         const url = typeof page?.url === 'string' ? page.url : globalThis.location?.href;
         if (typeof url === 'string' && url.length > 0) {
             currentPath = new URL(url, globalThis.location?.origin ?? 'http://localhost').pathname;

@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Analytics\PageViewController;
 use App\Http\Controllers\Onboarding\SubscriptionPaymentController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\Storefront\CheckoutController;
 use App\Http\Controllers\Storefront\OrderPaymentController;
 use App\Http\Controllers\Storefront\StorefrontPaymentLinkController;
@@ -73,5 +74,7 @@ Route::prefix('merchant')
 Route::post('analytics/pageview', [PageViewController::class, 'store'])
     ->middleware(['web', 'throttle:120,1'])
     ->name('analytics.pageview');
+
+Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
 require __DIR__.'/settings.php';

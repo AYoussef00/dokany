@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\PageView;
-use App\Models\SiteVisit;
 use App\Models\StorefrontOrder;
 use App\Models\User;
+use App\Services\Admin\AdminPlatformMetricsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,102 +14,14 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request, AdminPlatformMetricsService $adminMetrics): Response
     {
         $user = $request->user();
 
         $dashboardStats = null;
 
         if ($user !== null && $user->isAdmin()) {
-            $platformAmount = (float) config('dokany.subscription.amount', 0);
-
-            $activeSellers = User::query()
-                ->where('role', User::ROLE_SELLER)
-                ->where('merchant_subscription_status', User::MERCHANT_SUBSCRIPTION_ACTIVE)
-                ->get(['subscription_paid_amount', 'subscription_payment_reported_at']);
-
-            $totalRevenue = 0.0;
-
-            foreach ($activeSellers as $seller) {
-                if ($seller->subscription_paid_amount !== null) {
-                    $totalRevenue += (float) $seller->subscription_paid_amount;
-                } elseif ($seller->subscription_payment_reported_at !== null) {
-                    $totalRevenue += $platformAmount;
-                }
-            }
-
-            $dashboardStats = [
-                'total_revenue' => round($totalRevenue, 2),
-                'currency_en' => (string) config('dokany.subscription.currency_label_en', 'EGP'),
-                'active_merchants_count' => $activeSellers->count(),
-                'pending_requests_count' => User::query()
-                    ->where('role', User::ROLE_SELLER)
-                    ->where('merchant_subscription_status', User::MERCHANT_SUBSCRIPTION_PENDING_REVIEW)
-                    ->count(),
-                'total_products_all_sellers' => Product::query()
-                    ->whereHas('user', fn ($q) => $q->where('role', User::ROLE_SELLER))
-                    ->count(),
-                'total_storefront_orders' => StorefrontOrder::query()->count('*'),
-                'visitors_today' => SiteVisit::query()
-                    ->where('visited_at', '>=', now()->startOfDay())
-                    ->distinct()
-                    ->count('session_hash'),
-                'visitors_total' => SiteVisit::query()
-                    ->distinct()
-                    ->count('session_hash'),
-                'top_countries_30d' => SiteVisit::query()
-                    ->selectRaw('COALESCE(country_name, \'Unknown\') as country, COUNT(DISTINCT session_hash) as visitors', [])
-                    ->where('visited_at', '>=', now()->subDays(30))
-                    ->groupBy('country')
-                    ->orderByDesc('visitors')
-                    ->limit(5)
-                    ->get()
-                    ->map(fn ($r) => ['country' => $r->country, 'visitors' => (int) $r->visitors])
-                    ->all(),
-                'top_pages_30d' => PageView::query()
-                    ->selectRaw('path, COALESCE(MAX(component), path) as route, COUNT(*) as views, AVG(duration_seconds) as avg_seconds', [])
-                    ->where('started_at', '>=', now()->subDays(30))
-                    ->where('path', 'not like', '/dashboard%')
-                    ->where('path', 'not like', '/merchant%')
-                    ->where('path', 'not like', '/settings%')
-                    ->groupBy('path')
-                    ->orderByDesc('views')
-                    ->limit(7)
-                    ->get()
-                    ->map(fn ($r) => [
-                        'path' => (string) $r->path,
-                        'route' => (string) ($r->route ?? $r->path),
-                        'views' => (int) $r->views,
-                        'avg_seconds' => (int) round((float) $r->avg_seconds),
-                    ])
-                    ->all(),
-                'recent_journeys' => PageView::query()
-                    ->where('started_at', '>=', now()->subDays(7))
-                    ->where('path', 'not like', '/dashboard%')
-                    ->where('path', 'not like', '/merchant%')
-                    ->where('path', 'not like', '/settings%')
-                    ->orderByDesc('started_at')
-                    ->limit(200)
-                    ->get(['session_hash', 'user_id', 'path', 'component', 'duration_seconds', 'started_at'])
-                    ->groupBy('session_hash')
-                    ->take(15)
-                    ->map(function ($rows, $sessionHash) {
-                        $sorted = collect($rows)->sortBy('started_at')->values();
-                        $total = (int) $sorted->sum('duration_seconds');
-                        return [
-                            'session' => (string) $sessionHash,
-                            'user_id' => $sorted->first()?->user_id,
-                            'total_seconds' => $total,
-                            'pages' => $sorted->map(fn ($x) => [
-                                'path' => (string) $x->path,
-                                'route' => (string) ($x->component ?: $x->path),
-                                'seconds' => (int) $x->duration_seconds,
-                            ])->all(),
-                        ];
-                    })
-                    ->values()
-                    ->all(),
-            ];
+            $dashboardStats = $adminMetrics->buildDashboardStats();
         }
 
         $sellerDashboardStats = null;

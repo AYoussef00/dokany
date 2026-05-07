@@ -61,6 +61,31 @@ return [
         ),
     ],
 
+    /**
+     * Paths excluded from public page-view analytics (admin / merchant / settings).
+     * Used by PageViewController, dashboard aggregates, and any future reporting.
+     *
+     * @var list<string>
+     */
+    'analytics' => [
+        'public_page_view_exclude_prefixes' => [
+            '/dashboard',
+            '/merchant',
+            '/settings',
+        ],
+    ],
+
+    /** Public support / WhatsApp (E.164). Shown in SEO JSON-LD and can be shared to the frontend. */
+    'support' => [
+        'phone_e164' => env('DOKANY_SUPPORT_PHONE', '+966597150026'),
+    ],
+
+    /** Landing / SEO asset paths relative to public/ or absolute URLs under base. */
+    'seo' => [
+        'og_image' => env('DOKANY_SEO_OG_IMAGE', '/dokany_ad_v1_1.png'),
+        'organization_logo' => '/favicon_io/android-chrome-512x512.png',
+    ],
+
     'subscription' => [
         'amount' => (int) env('DOKANY_SUBSCRIPTION_AMOUNT', 500),
         'currency_label' => env('DOKANY_SUBSCRIPTION_CURRENCY', 'ج.م'),

@@ -17,6 +17,13 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            dokany: {
+                baseUrl: string;
+                supportPhoneE164: string;
+                seoOgImage: string;
+                seoOrganizationLogo: string;
+                analyticsPublicPathExcludePrefixes: string[];
+            };
             auth: Auth;
             sidebarOpen: boolean;
             flash: {

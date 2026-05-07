@@ -1,2 +1,18 @@
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /dashboard
+Disallow: /merchant/
+Disallow: /admin/
+Disallow: /settings/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /confirm-password
+Disallow: /two-factor-challenge
+Disallow: /onboarding/
+Disallow: /analytics/
+Disallow: /api/
+
+Sitemap: https://dokany.itap-tech.com/sitemap.xml

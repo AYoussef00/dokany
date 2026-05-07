@@ -15,11 +15,30 @@ import { computed, onMounted, ref } from 'vue';
 import { dashboard, login, register } from '@/routes';
 import type { User as AuthUser } from '@/types';
 
+function absoluteFromBase(base: string, pathOrUrl: string): string {
+    const raw = pathOrUrl.trim();
+    if (/^https?:\/\//i.test(raw)) {
+        return raw;
+    }
+    const b = base.replace(/\/$/, '');
+    const path = raw.startsWith('/') ? raw : `/${raw}`;
+    return `${b}${path}`;
+}
+
 const openFaq = ref<number | null>(null);
 const copied = ref(false);
 const page = usePage<{ auth: { user: AuthUser | null } }>();
 const isAuthenticated = computed(() => page.props.auth.user !== null);
 const year = computed(() => new Date().getFullYear());
+
+const siteUrl = computed(() => page.props.dokany.baseUrl);
+const landingCanonicalUrl = computed(() => `${siteUrl.value}/`);
+const ogImageAbsolute = computed(() => absoluteFromBase(siteUrl.value, page.props.dokany.seoOgImage));
+const organizationLogoAbsolute = computed(() => absoluteFromBase(siteUrl.value, page.props.dokany.seoOrganizationLogo));
+const supportPhoneE164 = computed(() => page.props.dokany.supportPhoneE164);
+const supportPhoneDigits = computed(() => supportPhoneE164.value.replace(/[^\d]/g, ''));
+const whatsappUrl = computed(() => `https://wa.me/${supportPhoneDigits.value}`);
+const telUrl = computed(() => `tel:${supportPhoneE164.value}`);
 
 const adOpen = ref(false);
 const AD_SESSION_KEY = 'dokany:ad:dokany_ad_v1_1:closed';
@@ -74,6 +93,74 @@ const faqs = [
     { question: 'في حد أقصى لعدد المنتجات؟', answer: 'لا خالص! ضيف عدد المنتجات اللي انت عايزه، مفيش أي حدود على الإطلاق.' },
     { question: 'لو محتاج مساعدة هعمل إيه؟', answer: 'فريق الدعم الفني موجود على طول، تواصل معنا وهنساعدك في أي حاجة.' },
 ];
+
+const organizationJsonLd = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Dokany',
+        alternateName: 'دكاني',
+        url: siteUrl.value,
+        logo: organizationLogoAbsolute.value,
+        sameAs: [],
+        contactPoint: [
+            {
+                '@type': 'ContactPoint',
+                telephone: supportPhoneE164.value,
+                contactType: 'customer support',
+                areaServed: ['SA', 'EG'],
+                availableLanguage: ['Arabic'],
+            },
+        ],
+    }),
+);
+
+const websiteJsonLd = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Dokany',
+        url: siteUrl.value,
+        inLanguage: 'ar',
+        potentialAction: {
+            '@type': 'SearchAction',
+            target: `${siteUrl.value}/?q={search_term_string}`,
+            'query-input': 'required name=search_term_string',
+        },
+    }),
+);
+
+const productJsonLd = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: 'Dokany - منصة إنشاء المتاجر الإلكترونية',
+        description:
+            'منصة لإنشاء متجر إلكتروني احترافي في دقائق، رابط متجر سهل المشاركة، إدارة منتجات وطلبات وفواتير، واستلام مدفوعات على إنستا باي مباشرة.',
+        brand: { '@type': 'Brand', name: 'Dokany' },
+        url: siteUrl.value,
+        image: ogImageAbsolute.value,
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'SAR',
+            availability: 'https://schema.org/InStock',
+            url: siteUrl.value,
+        },
+    }),
+);
+
+const faqJsonLd = computed(() =>
+    JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.question,
+            acceptedAnswer: { '@type': 'Answer', text: f.answer },
+        })),
+    }),
+);
 
 function handleCopyLink(): void {
     const text = brandUrlExample;
@@ -132,14 +219,46 @@ onMounted(() => {
 </script>
 
 <template>
-    <Head title="إنشئ متجرك في دقايق">
-        <meta name="description" content="إنشئ متجرك الإلكتروني في أقل من 5 دقايق، شارك لينك متجرك وابدأ البيع فورًا." />
+    <Head title="Dokany | أنشئ متجرك الإلكتروني في دقائق واستلم على إنستا باي">
+        <meta name="description" content="Dokany منصة سعودية لإنشاء متجر إلكتروني احترافي في دقائق، إدارة المنتجات والطلبات والفواتير، رابط متجر سهل المشاركة، واستلام مدفوعات على إنستا باي مباشرة." />
+        <meta name="keywords" content="دكاني, Dokany, متجر إلكتروني, إنشاء متجر, متجر اونلاين, شوبيفاي عربي, متجر سعودي, إنستا باي, InstaPay, التجارة الإلكترونية, متجر منتجات" />
+        <meta name="author" content="Dokany" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <meta name="theme-color" content="#4f46e5" />
+        <meta http-equiv="Content-Language" content="ar" />
+
+        <link rel="canonical" :href="landingCanonicalUrl" />
+        <link rel="alternate" hreflang="ar" :href="landingCanonicalUrl" />
+        <link rel="alternate" hreflang="x-default" :href="landingCanonicalUrl" />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Dokany" />
+        <meta property="og:locale" content="ar_SA" />
+        <meta property="og:title" content="Dokany | أنشئ متجرك الإلكتروني في دقائق واستلم على إنستا باي" />
+        <meta property="og:description" content="منصة عربية لإنشاء متجر إلكتروني احترافي، رابط متجر سهل المشاركة، إدارة منتجات وطلبات، واستلام مدفوعات على إنستا باي مباشرة." />
+        <meta property="og:url" :content="landingCanonicalUrl" />
+        <meta property="og:image" :content="ogImageAbsolute" />
+        <meta property="og:image:alt" content="Dokany - منصة إنشاء المتاجر الإلكترونية" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Dokany | أنشئ متجرك الإلكتروني في دقائق" />
+        <meta name="twitter:description" content="منصة عربية لإنشاء متجر إلكتروني احترافي، رابط متجر سهل المشاركة، واستلام مدفوعات على إنستا باي مباشرة." />
+        <meta name="twitter:image" :content="ogImageAbsolute" />
+        <meta name="twitter:image:alt" content="Dokany - منصة إنشاء المتاجر الإلكترونية" />
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
         <link
             href="https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&family=Arimo:ital,wght@0,400..700;1,400..700&family=Changa:wght@200..800&display=swap"
             rel="stylesheet"
         />
+
+        <component :is="'script'" type="application/ld+json" v-html="organizationJsonLd" />
+        <component :is="'script'" type="application/ld+json" v-html="websiteJsonLd" />
+        <component :is="'script'" type="application/ld+json" v-html="productJsonLd" />
+        <component :is="'script'" type="application/ld+json" v-html="faqJsonLd" />
     </Head>
 
     <div dir="rtl" lang="ar" class="dokany-landing min-h-screen bg-white text-slate-900">
@@ -572,47 +691,96 @@ onMounted(() => {
             </div>
         </section>
 
-        <footer class="border-t border-slate-200 bg-white py-12 text-slate-600">
-            <div class="mx-auto max-w-6xl px-6">
-                <div class="grid gap-8 md:grid-cols-4">
-                    <div>
-                        <div dir="ltr" class="text-lg font-black tracking-tight text-slate-900">Dokany</div>
-                        <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                            أسهل طريقة لإنشاء متجرك الإلكتروني والبدء في البيع أونلاين — بتصميم احترافي قريب من Shopify.
+        <footer class="border-t border-slate-200 bg-white">
+            <div class="mx-auto max-w-6xl px-6 py-14">
+                <div class="grid gap-10 md:grid-cols-12">
+                    <div class="md:col-span-5">
+                        <div class="flex items-center gap-3">
+                            <div class="inline-flex size-11 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100">
+                                <Package class="h-6 w-6" stroke-width="2" />
+                            </div>
+                            <div>
+                                <div dir="ltr" class="text-xl font-black tracking-tight text-slate-900">Dokany</div>
+                                <div class="text-xs font-semibold text-slate-500">منصّة إنشاء المتاجر الإلكترونية</div>
+                            </div>
+                        </div>
+
+                        <p class="mt-5 max-w-md text-sm leading-relaxed text-slate-600">
+                            أنشئ متجرك في دقائق، شارك رابطك بسهولة، وابدأ البيع فوراً. تصميم نظيف وتجربة عميل سريعة على الموبايل.
                         </p>
+
+                        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <a
+                                :href="whatsappUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-sm shadow-black/10 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/15"
+                            >
+                                <MessageCircle class="h-5 w-5" stroke-width="2.25" />
+                                واتساب الدعم
+                            </a>
+                            <a
+                                :href="telUrl"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-800 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-900/10"
+                            >
+                                <CircleUser class="h-5 w-5" stroke-width="2.25" />
+                                {{ supportPhoneE164 }}
+                            </a>
+                        </div>
                     </div>
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900">روابط</h3>
-                        <ul class="mt-4 space-y-2 text-sm font-semibold">
-                            <li><Link :href="register()" class="hover:text-slate-900">ابدأ الآن</Link></li>
-                            <li><a href="#features" class="hover:text-slate-900">المميزات</a></li>
-                            <li><a href="#pricing" class="hover:text-slate-900">التسعير</a></li>
-                            <li><a href="#faq" class="hover:text-slate-900">الأسئلة الشائعة</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900">منتج</h3>
-                        <ul class="mt-4 space-y-2 text-sm font-semibold">
-                            <li><a href="#how" class="hover:text-slate-900">كيف تعمل</a></li>
-                            <li><Link :href="login()" class="hover:text-slate-900">تسجيل الدخول</Link></li>
-                            <li><Link :href="dashboard()" class="hover:text-slate-900">لوحة التحكم</Link></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900">تواصل معنا</h3>
-                        <p class="mt-4 text-sm leading-relaxed text-slate-600">
-                            لو عندك أي سؤال أو محتاج مساعدة في إعداد متجرك، تواصل معنا وسنساعدك فوراً.
-                        </p>
+
+                    <div class="md:col-span-7">
+                        <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">ابدأ</h3>
+                                <ul class="mt-4 space-y-2 text-sm font-semibold text-slate-600">
+                                    <li><Link :href="register()" class="hover:text-slate-900">إنشاء حساب</Link></li>
+                                    <li><Link :href="login()" class="hover:text-slate-900">تسجيل الدخول</Link></li>
+                                    <li><Link :href="dashboard()" class="hover:text-slate-900">لوحة التحكم</Link></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">اكتشف</h3>
+                                <ul class="mt-4 space-y-2 text-sm font-semibold text-slate-600">
+                                    <li><a href="#features" class="hover:text-slate-900">المميزات</a></li>
+                                    <li><a href="#how" class="hover:text-slate-900">كيف تعمل</a></li>
+                                    <li><a href="#pricing" class="hover:text-slate-900">التسعير</a></li>
+                                    <li><a href="#faq" class="hover:text-slate-900">الأسئلة الشائعة</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-black text-slate-900">الدعم</h3>
+                                <ul class="mt-4 space-y-2 text-sm font-semibold text-slate-600">
+                                    <li>
+                                        <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer" class="hover:text-slate-900">محادثة واتساب</a>
+                                    </li>
+                                    <li>
+                                        <a :href="telUrl" class="hover:text-slate-900">اتصال مباشر</a>
+                                    </li>
+                                    <li class="pt-1 text-xs font-semibold text-slate-500">
+                                        متاح لمساعدتك في إعداد المتجر وربط الدفع.
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-10 border-t border-slate-200 pt-8 text-center text-sm text-slate-500">
-                    <p>© {{ year }} جميع الحقوق محفوظة</p>
+
+                <div class="mt-12 flex flex-col gap-4 border-t border-slate-200 pt-8 md:flex-row md:items-center md:justify-between">
+                    <p class="text-sm font-semibold text-slate-500">© {{ year }} Dokany. جميع الحقوق محفوظة.</p>
+                    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold text-slate-500">
+                        <a href="#pricing" class="hover:text-slate-900">الأسعار</a>
+                        <span class="text-slate-300">•</span>
+                        <a href="#faq" class="hover:text-slate-900">الدعم</a>
+                        <span class="text-slate-300">•</span>
+                        <a :href="landingCanonicalUrl" class="hover:text-slate-900">الرئيسية</a>
+                    </div>
                 </div>
             </div>
         </footer>
 
         <a
-            href="https://wa.me/966597150026"
+            :href="whatsappUrl"
             target="_blank"
             rel="noopener noreferrer"
             class="fixed bottom-5 right-5 z-50 inline-flex size-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/10 ring-1 ring-black/5 transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-[#25D366]/25"

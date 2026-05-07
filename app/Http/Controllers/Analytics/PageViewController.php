@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Analytics;
 
 use App\Http\Controllers\Controller;
 use App\Models\PageView;
+use App\Support\Analytics\PublicPageViewPathRules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,8 +35,7 @@ class PageViewController extends Controller
 
         $path = '/'.ltrim((string) $data['path'], '/');
 
-        // Never record admin/dashboard sections in public analytics.
-        if (preg_match('#^/(dashboard|merchant|settings)(/|$)#', $path) === 1) {
+        if (PublicPageViewPathRules::isExcludedFromTracking($path)) {
             return response()->json(['ok' => true]);
         }
 

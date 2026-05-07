@@ -66,6 +66,13 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'dokany' => [
+                'baseUrl' => rtrim((string) config('app.url'), '/'),
+                'supportPhoneE164' => (string) config('dokany.support.phone_e164'),
+                'seoOgImage' => (string) config('dokany.seo.og_image'),
+                'seoOrganizationLogo' => (string) config('dokany.seo.organization_logo'),
+                'analyticsPublicPathExcludePrefixes' => config('dokany.analytics.public_page_view_exclude_prefixes', []),
+            ],
             'auth' => [
                 'user' => $user,
             ],
