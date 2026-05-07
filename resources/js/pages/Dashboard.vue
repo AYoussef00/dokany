@@ -1,24 +1,17 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
-    Activity,
     Bell,
     Calendar,
-    ClipboardList,
     FileText,
     Menu,
-    Package,
     Search,
-    ShoppingCart,
-    Store,
     TrendingUp,
-    Users,
-    Globe,
-    Wallet,
 } from 'lucide-vue-next';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
+import AdminPanel from '@/components/admin/dashboard/AdminPanel.vue';
 import { useSidebar } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 
@@ -33,6 +26,8 @@ type DashboardStats = {
     pending_requests_count: number;
     visitors_today: number;
     visitors_total: number;
+    total_products_all_sellers: number;
+    total_storefront_orders: number;
     top_countries_30d: { country: string; visitors: number }[];
     top_pages_30d: { path: string; route: string; views: number; avg_seconds: number }[];
     recent_journeys: {
@@ -85,6 +80,7 @@ const pageTitle = computed(() => {
     if (isSeller.value) {
         return 'لوحة التحكم';
     }
+
     return 'لوحة التحكم';
 });
 
@@ -103,30 +99,39 @@ function formatShortDate(iso: string | null): string {
     if (iso === null || iso === '') {
         return '—';
     }
+
     const d = new Date(iso);
+
     if (Number.isNaN(d.getTime())) {
         return '—';
     }
+
     return new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium' }).format(d);
 }
 
 const orderStatusPieStyle = computed(() => {
     const s = sellerDashboardStats.value;
+
     if (!s?.order_status_breakdown?.length) {
         return { background: 'conic-gradient(#e5e7eb 0% 100%)' };
     }
+
     const slices = s.order_status_breakdown.filter((x) => x.count > 0);
     const total = slices.reduce((a, x) => a + x.count, 0);
+
     if (total === 0) {
         return { background: 'conic-gradient(#e5e7eb 0% 100%)' };
     }
+
     let acc = 0;
     const parts = slices.map((x) => {
         const pct = (x.count / total) * 100;
         const start = acc;
         acc += pct;
+
         return `${x.color} ${start}% ${acc}%`;
     });
+
     return { background: `conic-gradient(${parts.join(', ')})` };
 });
 
@@ -144,8 +149,10 @@ const performanceLineChart = computed(() => {
     const pts = trend.map((d, i) => {
         const x = padX + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
         const y = padY + innerH - (d.value / max) * innerH;
+
         return `${x},${y}`;
     });
+
     return {
         w,
         h,
@@ -157,16 +164,12 @@ const performanceLineChart = computed(() => {
 
 const dashboardStats = computed(() => page.props.dashboardStats);
 
-const topPagesMaxViews = computed(() => {
-    const rows = dashboardStats.value?.top_pages_30d ?? [];
-    return Math.max(1, ...rows.map((r) => r.views));
-});
-
 function formatRevenue(amount: number, currency: string): string {
     const formatted = new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
     }).format(amount);
+
     return `${formatted} ${currency}`;
 }
 
@@ -176,16 +179,21 @@ function formatEnInteger(value: number): string {
 
 function formatDuration(seconds: number): string {
     const s = Math.max(0, Math.round(seconds));
+
     if (s < 60) {
         return `${s}s`;
     }
+
     const m = Math.floor(s / 60);
     const rem = s % 60;
+
     if (m < 60) {
         return `${m}m ${rem}s`;
     }
+
     const h = Math.floor(m / 60);
     const mm = m % 60;
+
     return `${h}h ${mm}m`;
 }
 
@@ -195,21 +203,25 @@ function maybeShowSellerRenewalWarning(): void {
     }
 
     const sa = page.props.sellerAccess;
+
     if (!sa?.accessEndsAt || sa.isExpired) {
         return;
     }
 
     const end = new Date(sa.accessEndsAt);
+
     if (Number.isNaN(end.getTime())) {
         return;
     }
 
     const msLeft = end.getTime() - Date.now();
+
     if (msLeft <= 0 || msLeft > SEVEN_DAYS_MS) {
         return;
     }
 
     const storageKey = `${RENEWAL_ALERT_SESSION_PREFIX}:${sa.accessEndsAt}`;
+
     if (globalThis.sessionStorage?.getItem(storageKey) === '1') {
         return;
     }
@@ -276,219 +288,17 @@ onUnmounted(() => {
     <Head :title="pageTitle" />
 
     <div
-        class="dokany-admin-dashboard flex h-full flex-1 flex-col gap-6 overflow-x-hidden rounded-xl p-4 md:p-6"
+        class="dokany-admin-dashboard flex h-full w-full flex-1 flex-col overflow-x-hidden"
         :dir="isSeller ? 'rtl' : undefined"
         :lang="isSeller ? 'ar' : undefined"
     >
-        <div
-            v-if="isAdmin"
-            dir="rtl"
-            lang="ar"
-            class="flex flex-col gap-1"
-        >
-            <h1 class="text-lg font-bold tracking-tight text-foreground md:text-xl">لوحة التحكم</h1>
-            <p class="text-sm text-muted-foreground">نظرة سريعة على أداء المنصة خلال آخر 30 يوم.</p>
-        </div>
-
-        <div
-            v-if="isAdmin && dashboardStats"
-            dir="rtl"
-            lang="ar"
-            class="grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
-            aria-live="polite"
-            aria-atomic="true"
-        >
-                <div class="dokany-stat-card h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="text-sm font-medium text-muted-foreground">زوار اليوم</span>
-                        <Users class="size-5 shrink-0 text-primary" stroke-width="1.75" />
-                    </div>
-                    <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                        {{ formatEnInteger(dashboardStats.visitors_today) }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة (حسب Session) خلال آخر 24 ساعة</p>
-                </div>
-
-                <div class="dokany-stat-card h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="text-sm font-medium text-muted-foreground">إجمالي الزوار</span>
-                        <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
-                    </div>
-                    <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                        {{ formatEnInteger(dashboardStats.visitors_total) }}
-                    </p>
-                    <p class="mt-1 text-xs text-muted-foreground">زيارات فريدة منذ بداية التتبع</p>
-                </div>
-
-                <div class="dokany-stat-card h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="text-sm font-medium text-muted-foreground">أعلى الدول (30 يوم)</span>
-                        <Globe class="size-5 shrink-0 text-primary" stroke-width="1.75" />
-                    </div>
-                    <div class="mt-3 space-y-2 text-sm">
-                        <div
-                            v-for="row in dashboardStats.top_countries_30d"
-                            :key="row.country"
-                            class="flex items-center justify-between gap-3"
-                        >
-                            <span class="truncate text-foreground">{{ row.country }}</span>
-                            <span class="shrink-0 font-semibold tabular-nums text-foreground" dir="ltr" lang="en">
-                                {{ formatEnInteger(row.visitors) }}
-                            </span>
-                        </div>
-                        <p v-if="dashboardStats.top_countries_30d.length === 0" class="text-xs text-muted-foreground">
-                            لا توجد بيانات بعد.
-                        </p>
-                    </div>
-                </div>
-
-            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-muted-foreground">إجمالي الإيرادات</span>
-                    <Wallet class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
-                </div>
-                <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                    {{ formatRevenue(dashboardStats.total_revenue, dashboardStats.currency_en) }}
-                </p>
-                <p class="mt-1 text-xs text-muted-foreground">من اشتراكات التجار النشطين (مبالغ مسجّلة + التحويلات المؤكدة)</p>
-            </div>
-            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-muted-foreground">عدد التجار</span>
-                    <Store class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
-                </div>
-                <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                    {{ formatEnInteger(dashboardStats.active_merchants_count) }}
-                </p>
-                <p class="mt-1 text-xs text-muted-foreground">تجار نشطون حالياً</p>
-            </div>
-            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-muted-foreground">طلبات قيد المراجعة</span>
-                    <ClipboardList class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
-                </div>
-                <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                    {{ formatEnInteger(dashboardStats.pending_requests_count) }}
-                </p>
-                <p class="mt-1 text-xs text-muted-foreground">في صفحة Requests للإدارة</p>
-            </div>
-            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-muted-foreground">إجمالي المنتجات</span>
-                    <Package class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
-                </div>
-                <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                    {{ formatEnInteger(dashboardStats.total_products_all_sellers) }}
-                </p>
-                <p class="mt-1 text-xs text-muted-foreground">
-                    كل المنتجات المضافة من التجار المسجّلين في المنصة
-                </p>
-            </div>
-            <div class="h-full rounded-xl border border-sidebar-border/70 bg-card px-5 py-4 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-sm font-medium text-muted-foreground">إجمالي طلبات المتاجر</span>
-                    <ShoppingCart class="size-5 shrink-0 text-[#C8A97E]" stroke-width="1.75" />
-                </div>
-                <p class="mt-3 text-2xl font-bold tracking-tight tabular-nums text-foreground" dir="ltr" lang="en">
-                    {{ formatEnInteger(dashboardStats.total_storefront_orders) }}
-                </p>
-                <p class="mt-1 text-xs text-muted-foreground">
-                    طلبات العملاء المسجّلة لجميع التجار (كل الحالات)
-                </p>
-            </div>
-        </div>
-
-        <div v-if="isAdmin && dashboardStats" dir="rtl" lang="ar" class="grid gap-4 xl:grid-cols-2">
-            <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex flex-col gap-0.5">
-                        <h2 class="text-sm font-semibold text-foreground">أكثر الصفحات زيارة (30 يوم)</h2>
-                        <p class="text-xs text-muted-foreground">Views + متوسط مدة البقاء في الصفحة.</p>
-                    </div>
-                    <TrendingUp class="size-5 shrink-0 text-primary" stroke-width="1.75" />
-                </div>
-
-                <div class="mt-4 space-y-3">
-                    <div
-                        v-for="row in dashboardStats.top_pages_30d"
-                        :key="row.path"
-                        class="rounded-lg border border-sidebar-border/60 bg-background/60 p-3"
-                    >
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
-                                <p class="truncate text-sm font-medium text-foreground" dir="ltr" lang="en">{{ row.route }}</p>
-                                <p class="mt-0.5 truncate text-[11px] text-muted-foreground" dir="ltr" lang="en">
-                                    {{ row.path }}
-                                </p>
-                                <p class="mt-0.5 text-xs text-muted-foreground">
-                                    متوسط: <span class="font-medium text-foreground">{{ formatDuration(row.avg_seconds) }}</span>
-                                </p>
-                            </div>
-                            <div class="shrink-0 text-right" dir="ltr" lang="en">
-                                <p class="text-sm font-semibold tabular-nums text-foreground">{{ formatEnInteger(row.views) }}</p>
-                                <p class="text-[11px] text-muted-foreground">views</p>
-                            </div>
-                        </div>
-                        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                                class="h-full rounded-full bg-primary/80"
-                                :style="{ width: `${Math.min(100, Math.round((row.views / topPagesMaxViews) * 100))}%` }"
-                            />
-                        </div>
-                    </div>
-
-                    <p v-if="dashboardStats.top_pages_30d.length === 0" class="text-sm text-muted-foreground">
-                        لا توجد بيانات كافية بعد. افتح صفحات الموقع ثم ارجع هنا.
-                    </p>
-                </div>
-            </div>
-
-            <div class="rounded-xl border border-sidebar-border/70 bg-card p-5 shadow-sm dark:border-sidebar-border">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex flex-col gap-0.5">
-                        <h2 class="text-sm font-semibold text-foreground">رحلات المستخدمين (آخر 7 أيام)</h2>
-                        <p class="text-xs text-muted-foreground">كل Session: ترتيب الصفحات + الوقت في كل صفحة.</p>
-                    </div>
-                    <Activity class="size-5 shrink-0 text-primary" stroke-width="1.75" />
-                </div>
-
-                <div class="mt-4 space-y-3">
-                    <div
-                        v-for="journey in dashboardStats.recent_journeys"
-                        :key="journey.session"
-                        class="rounded-lg border border-sidebar-border/60 bg-background/60 p-3"
-                    >
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="text-xs text-muted-foreground" dir="ltr" lang="en">
-                                session: <span class="font-mono text-foreground">{{ journey.session.slice(0, 10) }}</span>
-                                <span v-if="journey.user_id" class="ml-2">user: <span class="font-semibold text-foreground">#{{ journey.user_id }}</span></span>
-                            </div>
-                            <div class="text-xs text-muted-foreground">
-                                الإجمالي: <span class="font-semibold text-foreground">{{ formatDuration(journey.total_seconds) }}</span>
-                            </div>
-                        </div>
-
-                        <div class="mt-2 grid gap-2">
-                            <div
-                                v-for="(p, idx) in journey.pages"
-                                :key="`${journey.session}:${idx}:${p.path}`"
-                                class="flex items-center justify-between gap-3 rounded-md bg-background/70 px-3 py-2"
-                            >
-                                <p class="min-w-0 truncate text-xs font-medium text-foreground" dir="ltr" lang="en">
-                                    {{ idx + 1 }}. {{ p.route }}
-                                </p>
-                                <p class="shrink-0 text-xs font-semibold tabular-nums text-foreground" dir="ltr" lang="en">
-                                    {{ formatDuration(p.seconds) }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p v-if="dashboardStats.recent_journeys.length === 0" class="text-sm text-muted-foreground">
-                        لا توجد رحلات بعد. افتح الموقع من متصفح جديد وجرب التنقل بين الصفحات.
-                    </p>
-                </div>
-            </div>
+        <div v-if="isAdmin && dashboardStats" aria-live="polite" aria-atomic="true">
+            <AdminPanel
+                :stats="dashboardStats"
+                :format-en-integer="formatEnInteger"
+                :format-revenue="formatRevenue"
+                :format-duration="formatDuration"
+            />
         </div>
 
         <div

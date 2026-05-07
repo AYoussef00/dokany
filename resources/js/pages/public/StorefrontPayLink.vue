@@ -25,7 +25,7 @@ const props = defineProps<{
     productCurrencyAr: string;
 }>();
 
-defineOptions({ layout: false });
+defineOptions({ layout: false as any });
 
 const geoLoading = ref(false);
 const geoMessage = ref<string | null>(null);

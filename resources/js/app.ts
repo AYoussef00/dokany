@@ -54,18 +54,22 @@ function normalizeAnalyticsExcludedPrefixes(input: unknown): string[] | null {
     if (!Array.isArray(input)) {
         return null;
     }
+
     const out: string[] = [];
+
     for (const x of input) {
         if (typeof x === 'string' && x.length > 0) {
             out.push(x.startsWith('/') ? x : `/${x}`);
         }
     }
+
     return out.length > 0 ? out : null;
 }
 
 /** Mirrors App\Support\Analytics\PublicPageViewPathRules::isExcludedFromTracking */
 function isPathExcludedFromPublicAnalytics(path: string, prefixes: string[]): boolean {
     const normalized = `/${path.replace(/^\/+/, '')}`;
+
     for (const prefix of prefixes) {
         const p = `/${prefix.replace(/^\/+/, '')}`;
         const base = p.replace(/\/+$/, '') || '/';
@@ -73,6 +77,7 @@ function isPathExcludedFromPublicAnalytics(path: string, prefixes: string[]): bo
             return true;
         }
     }
+
     return false;
 }
 
@@ -85,10 +90,12 @@ function syncAnalyticsPrefixesFromInertiaPage(page: unknown): void {
         if (!page || typeof page !== 'object') {
             return;
         }
+
         const props = (page as { props?: unknown }).props;
         if (!props || typeof props !== 'object') {
             return;
         }
+
         const dokany = (props as { dokany?: { analyticsPublicPathExcludePrefixes?: unknown } }).dokany;
         const next = normalizeAnalyticsExcludedPrefixes(dokany?.analyticsPublicPathExcludePrefixes);
         if (next) {
@@ -106,7 +113,9 @@ function tryReadInitialComponent(): void {
         if (!raw) {
             return;
         }
+
         const page = JSON.parse(raw) as { component?: unknown; url?: unknown; props?: unknown };
+
         syncAnalyticsPrefixesFromInertiaPage(page);
         if (typeof page.component === 'string' && page.component.length > 0) {
             currentComponent = page.component;

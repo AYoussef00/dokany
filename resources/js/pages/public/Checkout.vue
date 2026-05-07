@@ -38,7 +38,7 @@ const props = defineProps<{
     paymentInstructions: string;
 }>();
 
-defineOptions({ layout: false });
+defineOptions({ layout: false as any });
 
 const step = ref(1);
 const cartLines = ref<CartLine[]>([]);
@@ -626,7 +626,7 @@ onMounted(() => {
                             <dd class="font-semibold text-[#111111]">مُرفقة مع الطلب</dd>
                         </div>
                     </dl>
-                    <InputError :message="form.errors.lines" />
+                    <InputError :message="(form.errors as any).lines" />
                 </div>
 
                 <div

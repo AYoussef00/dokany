@@ -6,7 +6,7 @@ import { dashboard } from '@/routes';
 import { home } from '@/routes';
 import { store as subscriptionPaymentStore } from '@/routes/onboarding/subscription-payment';
 
-defineOptions({ layout: null });
+defineOptions({ layout: null as any });
 
 const props = defineProps<{
     subscriptionAmount: number;

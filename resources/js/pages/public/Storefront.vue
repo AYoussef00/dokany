@@ -207,7 +207,7 @@ const storefrontHeadPreloadImages = computed(() => {
     return urls;
 });
 
-defineOptions({ layout: false });
+defineOptions({ layout: false as any });
 
 const cartOpen = ref(false);
 const menuOpen = ref(false);

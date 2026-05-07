@@ -40,7 +40,7 @@ const props = defineProps<{
     paymentInstructions: string;
 }>();
 
-defineOptions({ layout: null });
+defineOptions({ layout: null as any });
 
 const copiedWallet = ref(false);
 let copyTimeout: ReturnType<typeof setTimeout> | null = null;
