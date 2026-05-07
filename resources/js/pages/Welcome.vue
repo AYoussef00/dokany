@@ -226,10 +226,6 @@ onMounted(() => {
             <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(110%_70%_at_50%_0%,rgba(79,70,229,0.14),transparent_60%),radial-gradient(90%_60%_at_10%_20%,rgba(99,102,241,0.10),transparent_55%),linear-gradient(180deg,#ffffff_0%,#f8fafc_55%,#ffffff_100%)]" />
             <div class="relative mx-auto max-w-6xl px-6 py-16 md:py-20">
                 <div class="mx-auto max-w-3xl text-center">
-                    <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm">
-                        <span class="inline-flex size-5 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">✓</span>
-                        جاهز في دقايق — بدون خبرة تقنية
-                    </div>
                     <h1 class="text-4xl font-black leading-tight tracking-tight text-slate-900 md:text-6xl">
                         أنشئ متجر احترافي
                         <span class="text-primary inline-flex items-center gap-2">
@@ -249,7 +245,10 @@ onMounted(() => {
                         وابدأ البيع فورًا
                     </h1>
                     <p class="mt-6 text-lg leading-relaxed text-slate-600 md:text-xl">
-                        تصميم راقي، رابط متجر سهل المشاركة، وإدارة طلبات ومنتجات بشكل منظم — كل ده من لوحة تحكم واحدة.
+                        تصميم راقي، رابط متجر سهل المشاركة، وإدارة طلبات ومنتجات بشكل منظم، كل ده من لوحة تحكم واحدة.
+                        واستلم فلوسك على
+                        <span class="font-bold text-slate-900">انستا باي</span>
+                        على طول.
                     </p>
                     <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                         <Link
@@ -339,7 +338,7 @@ onMounted(() => {
                         <div class="space-y-3">
                             <div class="rounded-2xl border border-slate-200 bg-white p-5">
                                 <p class="text-sm font-semibold text-slate-700">لوحة تحكم منظمة</p>
-                                <p class="mt-1 text-sm text-slate-600">طلبات، منتجات، فواتير — كله في مكانه.</p>
+                                <p class="mt-1 text-sm text-slate-600">طلبات، منتجات، فواتير، كله في مكانه.</p>
                             </div>
                             <div class="rounded-2xl border border-slate-200 bg-white p-5">
                                 <p class="text-sm font-semibold text-slate-700">سرعة ووضوح</p>
@@ -360,7 +359,7 @@ onMounted(() => {
             <div class="mx-auto max-w-6xl px-6">
                 <div class="mx-auto max-w-3xl text-center">
                     <h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">ابدأ في 3 خطوات</h2>
-                    <p class="mt-3 text-lg text-slate-600">نفس فكرة Shopify — بس أبسط وأسرع وبالعربي.</p>
+                    <p class="mt-3 text-lg text-slate-600">نفس فكرة Shopify، بس أبسط وأسرع وبالعربي.</p>
                 </div>
                 <div class="mt-10 grid gap-6 md:grid-cols-3">
                     <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -368,21 +367,21 @@ onMounted(() => {
                             <span class="text-xl font-black">1</span>
                         </div>
                         <h3 class="text-lg font-black text-slate-900">سجل حسابك</h3>
-                        <p class="mt-2 leading-relaxed text-slate-600">بيانات بسيطة وخلاص — تقدر تدخل لوحة التحكم فوراً.</p>
+                        <p class="mt-2 leading-relaxed text-slate-600">بيانات بسيطة وخلاص، تقدر تدخل لوحة التحكم فوراً.</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                         <div class="mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
                             <span class="text-xl font-black">2</span>
                         </div>
                         <h3 class="text-lg font-black text-slate-900">أضف منتجاتك</h3>
-                        <p class="mt-2 leading-relaxed text-slate-600">صور، سعر، وصف — تجربة منظمة وسريعة.</p>
+                        <p class="mt-2 leading-relaxed text-slate-600">صور، سعر، وصف، تجربة منظمة وسريعة.</p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
                         <div class="mb-5 inline-flex size-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
                             <span class="text-xl font-black">3</span>
                         </div>
                         <h3 class="text-lg font-black text-slate-900">شارك رابطك</h3>
-                        <p class="mt-2 leading-relaxed text-slate-600">لينك ثابت لمتجرك — شاركه على واتساب وفيسبوك.</p>
+                        <p class="mt-2 leading-relaxed text-slate-600">لينك ثابت لمتجرك، شاركه على واتساب وفيسبوك.</p>
                     </div>
                 </div>
             </div>
@@ -394,7 +393,7 @@ onMounted(() => {
                 <div class="mx-auto max-w-3xl text-center">
                     <h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">ليه Dokany؟</h2>
                     <p class="mt-3 text-lg text-slate-600">
-                        كل اللي محتاجه عشان تبدأ وتكبر — بتجربة نظيفة واحترافية.
+                        كل اللي محتاجه عشان تبدأ وتكبر، بتجربة نظيفة واحترافية.
                     </p>
                 </div>
                 <div class="mt-10 grid gap-6 md:grid-cols-3">
@@ -417,7 +416,7 @@ onMounted(() => {
         <section class="bg-white py-16">
             <div class="mx-auto max-w-4xl px-6 text-center">
                 <h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">رابط متجر سهل المشاركة</h2>
-                <p class="mt-3 text-lg text-slate-600">انسخه وأرسله — عميلك يوصل لمتجرك في ثانية.</p>
+                <p class="mt-3 text-lg text-slate-600">انسخه وأرسله، عميلك يوصل لمتجرك في ثانية.</p>
                 <div class="mx-auto mt-8 flex w-full max-w-[720px] items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 shadow-sm sm:gap-4 sm:px-6">
                     <button
                         type="button"
@@ -448,7 +447,7 @@ onMounted(() => {
             <div class="mx-auto max-w-6xl px-6">
                 <div class="mx-auto max-w-3xl text-center">
                     <h2 class="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">التسعير</h2>
-                    <p class="mt-3 text-lg text-slate-600">خطة بسيطة وواضحة — بدون تعقيد.</p>
+                    <p class="mt-3 text-lg text-slate-600">خطة بسيطة وواضحة، بدون تعقيد.</p>
                 </div>
                 <div class="mx-auto mt-10 max-w-2xl">
                     <div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
